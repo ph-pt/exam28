@@ -1,0 +1,5807 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FF8A3D">
+<link rel="manifest" href="./manifest.json">
+<link rel="apple-touch-icon" href="./icon-180.png">
+<title>クエスト</title>
+<style>
+  :root{
+    --ink:#26324B; --paper:#EEF4FB; --card:#FFFFFF;
+    --orange:#FF8A3D; --orange-deep:#F0742A;
+    --mint:#2FBF8F; --coral:#F26D6D; --star:#FFC53D;
+    --sky:#5AA9E6; --line:#D9E4F0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN","BIZ UDGothic","Yu Gothic",sans-serif;
+    background:var(--paper); color:var(--ink);
+    display:flex; justify-content:center; min-height:100%;
+    -webkit-user-select:none; user-select:none;
+  }
+  #app{width:100%; max-width:720px; padding:20px 18px 30px; display:flex; flex-direction:column; min-height:100vh;}
+
+  .warn-banner{background:#FFF3E6; border:2px solid var(--orange); border-radius:14px; padding:10px 14px; font-size:13px; margin-bottom:14px; line-height:1.6;}
+  .banner-link{display:block; margin-top:8px; background:var(--sky); color:#fff; border:none; border-radius:10px; font-family:inherit; font-size:13px; font-weight:800; padding:8px 14px; cursor:pointer;}
+
+  /* ---------- 最上位タブ ---------- */
+  .tabbar{display:flex; gap:8px; margin-bottom:16px;}
+  .tab{
+    flex:1; font-family:inherit; font-size:16px; font-weight:800; padding:12px 0;
+    border:none; border-radius:16px; cursor:pointer;
+    background:var(--card); color:#8896AC; box-shadow:0 3px 0 var(--line);
+  }
+  .tab.on{background:var(--orange); color:#fff; box-shadow:0 3px 0 var(--orange-deep);}
+
+  /* ---------- home ---------- */
+  .home-title{ text-align:center; font-size:28px; font-weight:800; letter-spacing:1px; margin:10px 0 4px; }
+  .home-sub{text-align:center; font-size:14px; color:#5B6B87; margin-bottom:20px; line-height:1.6;}
+
+  .map-card{background:var(--card); border-radius:22px; padding:20px 20px 18px; margin-bottom:18px; box-shadow:0 5px 0 var(--line);}
+  .map-label{font-size:12.5px; color:#8896AC; font-weight:700; margin-bottom:6px;}
+  .map-here{display:flex; align-items:center; gap:12px;}
+  .map-emoji{font-size:42px; flex-shrink:0;}
+  .map-name{font-size:22px; font-weight:800;}
+  .map-progress-wrap{margin-top:14px;}
+  .map-bar-track{background:#EAF1FA; border-radius:999px; height:12px; overflow:hidden;}
+  .map-bar-fill{background:linear-gradient(90deg, var(--sky), var(--mint)); height:100%; border-radius:999px; transition:width .4s;}
+  .map-progress-text{font-size:12px; color:#8896AC; margin-top:6px; display:flex; justify-content:space-between; gap:8px;}
+  .map-goal{font-size:13px; color:var(--orange-deep); font-weight:700; margin-top:8px; text-align:center;}
+  .bank-status{font-size:13px; line-height:1.9;}
+  .skin-status{font-size:13px; line-height:1.8; margin-top:8px; color:#5B6B87;}
+
+  .code-card{background:var(--card); border-radius:20px; padding:16px 18px; margin-bottom:16px; box-shadow:0 4px 0 var(--line);}
+  .code-label{font-size:13.5px; font-weight:700; margin-bottom:8px;}
+  .code-row{display:flex; gap:8px;}
+  .code-input{flex:1; font-family:inherit; font-size:15px; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:#F8FAFD; color:var(--ink); letter-spacing:1px;}
+  .code-btn{font-family:inherit; font-size:14px; font-weight:800; padding:10px 16px; border:none; border-radius:12px; background:var(--sky); color:#fff; cursor:pointer; box-shadow:0 3px 0 #3E86BD;}
+  .code-btn:active{transform:translateY(2px); box-shadow:0 1px 0 #3E86BD;}
+  .code-msg{font-size:13px; margin-top:8px; line-height:1.6;}
+  .code-msg.ok{color:#159A6E;} .code-msg.ng{color:#D64F4F;}
+  .slot-select{width:100%; font-family:inherit; font-size:15px; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:#F8FAFD; color:var(--ink);}
+
+  .home-note{font-size:12px; color:#8896AC; text-align:center; margin-top:auto; padding-top:20px; line-height:1.7;}
+  .parent-menu-row{text-align:center; padding-top:14px; display:flex; justify-content:center; gap:18px; flex-wrap:wrap;}
+  .parent-menu-btn{background:none; border:none; color:#B8C4D6; font-size:11.5px; font-family:inherit; padding:8px; cursor:pointer; text-decoration:underline;}
+  .bank-paste{width:100%; font-family:ui-monospace,monospace; font-size:12.5px; line-height:1.5; padding:10px 12px; border-radius:12px; border:2px solid var(--line); background:#F8FAFD; color:var(--ink); resize:vertical;}
+  .bank-file{width:100%; font-family:inherit; font-size:14px; padding:10px; background:#F4F8FD; border:2px dashed var(--sky); border-radius:12px;}
+  .reset-bank-btn{display:block; width:100%; margin-top:14px; background:var(--card); color:var(--ink); border:none; border-radius:16px; padding:15px 0; font-family:inherit; font-size:15px; font-weight:800; box-shadow:0 4px 0 var(--line); cursor:pointer;}
+  .reset-bank-btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+
+  .doors-label{font-size:14px; font-weight:800; color:#5B6B87; margin:2px 0 10px; text-align:center;}
+  .stage-btn{display:block; width:100%; background:var(--card); border:none; border-radius:20px; padding:16px 20px; margin-bottom:12px; text-align:left; box-shadow:0 4px 0 var(--line); cursor:pointer; font-family:inherit; color:var(--ink); transition:transform .08s;}
+  .stage-btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+  .stage-btn .stage-name{font-size:19px; font-weight:800;}
+  .stage-btn .stage-desc{font-size:13px; color:#5B6B87; margin-top:4px;}
+  .stage-btn.omakase{background:#FFF3E6;}
+  .door-here{font-size:12.5px; color:#8896AC; margin-top:6px;}
+  .stage-group{margin-bottom:10px;}
+  .kai-row{display:flex; gap:8px; margin:4px 2px 8px; flex-wrap:wrap;}
+  .kai-chip{border:none; border-radius:10px; padding:7px 12px; font-size:13px; font-weight:bold; font-family:inherit;}
+  .kai-chip.on{background:#E7F6EF; color:#2FBF8F;}
+  .kai-chip.off{background:#FFE9D6; color:#B85C00; box-shadow:0 2px 0 #E8C7A8; cursor:pointer;}
+  .kai-chip.off:active{transform:translateY(2px); box-shadow:none;}
+
+  /* ---------- boss ---------- */
+  .boss-card{background:var(--card); border-radius:22px; padding:22px 20px 20px; margin-bottom:16px; box-shadow:0 5px 0 var(--line); text-align:center;}
+  .boss-emoji-big{font-size:56px; line-height:1.1;}
+  .boss-card.enraged .boss-emoji-big{animation:shake .5s infinite;}
+  @keyframes shake{0%,100%{transform:rotate(0deg);} 25%{transform:rotate(-6deg);} 75%{transform:rotate(6deg);}}
+  .boss-card.defeated{background:#FFF9E6;}
+  .boss-name{font-size:20px; font-weight:800; margin-top:4px;}
+  .boss-flavor{font-size:13.5px; color:#8896AC; margin:8px 0 14px; line-height:1.6;}
+  .hp-label{font-size:12px; font-weight:700; color:#8896AC; text-align:left; margin-bottom:4px;}
+  .hp-bar-track{background:#F4E7D8; border-radius:999px; height:16px; overflow:hidden;}
+  .hp-bar-fill{background:linear-gradient(90deg, var(--coral), var(--orange)); height:100%; border-radius:999px; transition:width .5s;}
+  .hp-text{font-size:13px; color:#8896AC; margin-top:6px; font-weight:700;}
+  .defeat-banner{margin-top:12px; font-size:15px; font-weight:800; color:#C77D00; animation:pop .3s;}
+
+  .seals-row{display:flex; gap:8px; margin-bottom:16px;}
+  .seal-item{flex:1; background:var(--card); border-radius:16px; padding:10px 6px; text-align:center; box-shadow:0 3px 0 var(--line);}
+  .seal-item.locked{opacity:.72;}
+  .seal-item.unlocked{box-shadow:0 3px 0 var(--star);}
+  .seal-icon{font-size:20px;}
+  .seal-name{font-size:11.5px; font-weight:700; margin:2px 0 6px;}
+  .seal-bar-track{background:#F4E7D8; border-radius:999px; height:6px; overflow:hidden;}
+  .seal-bar-fill{background:var(--mint); height:100%; border-radius:999px; transition:width .4s;}
+  .seal-pct{font-size:10.5px; color:#8896AC; margin-top:4px;}
+  .sealbreak-banner{background:#FFF3E6; border:2px dashed var(--star); border-radius:14px; padding:10px 14px; font-size:13.5px; font-weight:700; margin-bottom:14px; text-align:center; line-height:1.6;}
+
+  /* ---------- quiz ---------- */
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px;}
+  .quit-btn{background:none; border:none; font-size:14px; color:#8896AC; font-family:inherit; padding:6px 4px; cursor:pointer; flex-shrink:0;}
+  .journey-mini,.hp-mini{flex:1; display:flex; align-items:center; gap:6px;}
+  .journey-mini .em,.hp-mini .em{font-size:16px;}
+  .journey-mini-track{flex:1; background:#DCE7F5; border-radius:999px; height:7px; overflow:hidden;}
+  .journey-mini-fill{background:var(--mint); height:100%; border-radius:999px; transition:width .5s;}
+  .hp-mini-track{flex:1; background:#F4E7D8; border-radius:999px; height:7px; overflow:hidden;}
+  .hp-mini-fill{background:linear-gradient(90deg, var(--coral), var(--orange)); height:100%; border-radius:999px; transition:width .5s;}
+  .combo{font-size:13px; font-weight:800; color:var(--orange-deep); min-width:70px; text-align:right; flex-shrink:0;}
+
+  .rail{display:flex; gap:5px; justify-content:center; margin-bottom:10px; flex-wrap:wrap;}
+  .rail span{font-size:16px; filter:grayscale(1) opacity(.35); transition:filter .3s, transform .3s;}
+  .rail span.on{filter:none; transform:scale(1.15);}
+  .rail span.ng{filter:grayscale(1) opacity(.8);}
+  .revenge-badge{display:inline-block; background:var(--coral); color:#fff; font-size:12.5px; font-weight:800; border-radius:999px; padding:4px 12px; margin-bottom:8px;}
+
+  .qcard{background:var(--card); border-radius:24px; padding:24px 22px; box-shadow:0 5px 0 var(--line);}
+  .qnum{font-size:13px; font-weight:700; color:var(--sky); margin-bottom:8px;}
+  .qtext{font-size:21px; line-height:1.7; font-weight:600; min-height:3.4em;}
+  .write-tip{font-size:12.5px; color:#8896AC; margin-top:10px;}
+
+  .answer-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px;}
+  .answer-box{flex:1; font-size:28px; font-weight:800; text-align:center; background:#F4F8FD; border:2px dashed var(--sky); border-radius:14px; min-height:58px; display:flex; align-items:center; justify-content:center; letter-spacing:1px; overflow:hidden;}
+  .answer-box.filled{border-style:solid;}
+  input.answer-box{display:block; text-align:center; padding:0 16px; font-family:inherit; -webkit-appearance:none; appearance:none;}
+  input.answer-box.answer-input{text-align:left;}
+  input.answer-box:disabled{opacity:.7;}
+  input.answer-box::placeholder{font-size:15px; font-weight:600; color:#A9B7CC;}
+  .unit{font-size:16px; color:#5B6B87; font-weight:700; min-width:2em;}
+
+  .hint-area{margin-top:12px;}
+  .hint-btn{background:#FFF3E6; color:var(--orange-deep); border:none; border-radius:999px; font-family:inherit; font-size:14.5px; font-weight:700; padding:10px 18px; cursor:pointer;}
+  .hint-bubble{background:#FFF9EF; border-left:5px solid var(--star); border-radius:0 12px 12px 0; padding:10px 14px; margin-top:8px; font-size:15px; line-height:1.6;}
+
+  .keypad{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:18px;}
+  .key{font-family:inherit; font-size:26px; font-weight:800; color:var(--ink); background:var(--card); border:none; border-radius:16px; padding:16px 0; box-shadow:0 4px 0 var(--line); cursor:pointer; transition:transform .06s;}
+  .key:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+  .key.fn{background:#E7EFF9; font-size:20px;}
+  .key.go{grid-column:span 2; background:var(--orange); color:#fff; box-shadow:0 4px 0 var(--orange-deep); font-size:22px; letter-spacing:2px;}
+  .key.go:disabled{opacity:.45;}
+
+  .fb{margin-top:16px; border-radius:18px; padding:16px 18px; font-size:16px; line-height:1.65; animation:pop .25s;}
+  @keyframes pop{from{transform:scale(.92); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .fb.ok{background:#E4F8F0; border:2px solid var(--mint);}
+  .fb.ng{background:#FDECEC; border:2px solid var(--coral);}
+  .fb .fb-head{font-size:20px; font-weight:800; margin-bottom:6px;}
+  .fb.ok .fb-head{color:#159A6E;} .fb.ng .fb-head{color:#D64F4F;}
+  .boss-react{font-size:14px; color:#8896AC; margin-bottom:6px;}
+  .counter-banner{background:#FFE8D6; border-radius:12px; padding:8px 12px; font-size:14px; font-weight:800; color:#C0501E; margin-bottom:8px;}
+  .next-btn{display:block; width:100%; margin-top:14px; background:var(--sky); color:#fff; border:none; border-radius:16px; font-family:inherit; font-size:19px; font-weight:800; padding:15px 0; box-shadow:0 4px 0 #3E86BD; cursor:pointer;}
+  .next-btn:active{transform:translateY(3px); box-shadow:0 1px 0 #3E86BD;}
+
+  /* ---------- result ---------- */
+  .res-head{text-align:center; margin:18px 0 10px;}
+  .res-emoji{font-size:52px;}
+  .res-title{font-size:24px; font-weight:800; margin-top:8px;}
+  .res-score{text-align:center; font-size:18px; margin-bottom:6px;}
+  .res-score b{font-size:34px; color:var(--orange-deep);}
+  .res-stars{text-align:center; font-size:26px; letter-spacing:4px; margin-bottom:14px;}
+  .journey-card{background:var(--card); border-radius:20px; padding:18px 20px; margin-bottom:16px; box-shadow:0 4px 0 var(--line); text-align:center;}
+  .journey-move{font-size:14px; color:#5B6B87; margin-bottom:8px;}
+  .journey-nodes{display:flex; align-items:center; justify-content:center; gap:10px; font-size:30px;}
+  .journey-arrow{font-size:18px; color:#8896AC;}
+  .journey-newname{font-size:15px; font-weight:800; margin-top:6px;}
+  .title-badge{display:inline-block; background:linear-gradient(135deg,var(--star),var(--orange)); color:#fff; font-size:14px; font-weight:800; border-radius:999px; padding:8px 18px; margin:4px 4px 12px; box-shadow:0 3px 0 var(--orange-deep);}
+  .title-wrap{text-align:center;}
+
+  .review-head{font-size:15px; font-weight:700; margin:8px 0 10px;}
+  .review{background:var(--card); border-radius:18px; padding:16px 18px; margin-bottom:12px; box-shadow:0 4px 0 var(--line);}
+  .review .rq{font-size:14.5px; font-weight:700; line-height:1.6;}
+  .review .ra{font-size:14px; margin-top:6px; line-height:1.6;}
+  .review .ra b{color:#159A6E;}
+  .review .ra .miss{color:#D64F4F; font-weight:700;}
+  .log-badge{display:inline-block; font-size:12px; font-weight:800; border-radius:999px; padding:3px 10px; margin-left:8px;}
+  .log-badge.gold{background:#FFF3D0; color:#B8860B;}
+  .log-badge.silver{background:#EFEFEF; color:#7A7A7A;}
+
+  .savecode-card{background:#2A3550; color:#fff; border-radius:20px; padding:20px; margin:16px 0; text-align:center;}
+  .savecode-label{font-size:13px; opacity:.8; margin-bottom:8px;}
+  .savecode-text{font-size:19px; font-weight:800; letter-spacing:1px; word-break:break-all; background:rgba(255,255,255,.12); border-radius:12px; padding:12px 14px; margin-bottom:8px;}
+  .savecode-note{font-size:12.5px; opacity:.85; line-height:1.6;}
+
+  .res-btns{display:flex; gap:12px; margin-top:16px;}
+  .res-btns button{flex:1; font-family:inherit; font-size:17px; font-weight:800; padding:15px 0; border:none; border-radius:16px; cursor:pointer;}
+  .retry{background:var(--orange); color:#fff; box-shadow:0 4px 0 var(--orange-deep);}
+  .gohome{background:var(--card); color:var(--ink); box-shadow:0 4px 0 var(--line);}
+
+  .confirm-card{background:var(--card); border-radius:20px; padding:20px; margin-bottom:16px; box-shadow:0 4px 0 var(--line); font-size:14.5px; line-height:1.8;}
+  .confirm-btns{display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;}
+  .confirm-btns button{flex:1;}
+
+  /* ---------- toast ---------- */
+  #toast{position:fixed; left:0; right:0; bottom:14px; display:none; justify-content:center; padding:0 16px; z-index:50;}
+  #toast.on{display:flex;}
+  .toast-body{font-family:inherit; font-size:14px; font-weight:700; line-height:1.5; background:#2A3550; color:#fff; border:none; border-radius:14px; padding:12px 18px; box-shadow:0 4px 12px rgba(0,0,0,.25); cursor:pointer; max-width:100%;}
+
+  @media (prefers-reduced-motion: reduce){ *{animation:none!important; transition:none!important;} }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+<script>
+(function(){
+"use strict";
+
+/* =====================================================================
+   クエスト統合版 v4.1
+   仕様: spec/spec_quest_v4_1.md(参照: spec_fukushu_quest_v3_1.md / spec_yoshu_quest_v1_3_1.md)
+   ・エンジンとデータは分離。下記10ブロックのみ差し替え対象(build.mjs が注入)
+   ・記録・通信なし。進捗はこの端末の localStorage にのみ保存される
+   ===================================================================== */
+
+/*==BANK_M_START==*/
+const BANK_M_RAW = `
+{
+  "bankVersion": "M_2026_07_26",
+  "subject": "M",
+  "cats": [
+    {
+      "cat": "きほん",
+      "icon": "🌱",
+      "desc": "平均・合計・回数の3つの関係をマスター"
+    },
+    {
+      "cat": "レベルアップ",
+      "icon": "🔥",
+      "desc": "「なりたい合計から引く」など一歩上のワザ"
+    },
+    {
+      "cat": "とりこぼし",
+      "icon": "🎯",
+      "desc": "計算・逆算・和差算のミス退治"
+    },
+    {
+      "cat": "割合",
+      "icon": "📊",
+      "desc": "三用法・相当算・売買。7月の新単元をここで固める"
+    }
+  ],
+  "questions": [
+    {
+      "id": "M0001",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "テストを3回受けました。点数は 70点、80点、90点 でした。平均は何点ですか。",
+      "ans": [
+        "80"
+      ],
+      "unit_label": "点",
+      "h1": "平均 = 合計 ÷ 回数 だよ。まず3回分をぜんぶたそう。",
+      "h2": "(70+80+90)÷3",
+      "exp": "70+80+90=240。240÷3=80点。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0002",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "4回のテストの平均が 75点 でした。4回の合計は何点ですか。",
+      "ans": [
+        "300"
+      ],
+      "unit_label": "点",
+      "h1": "合計 = 平均 × 回数。平均の逆向きの計算だよ。",
+      "h2": "75×4",
+      "exp": "75×4=300点。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0003",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "みかんが5個あります。1個の重さの平均は 82g です。5個ぜんぶで何gですか。",
+      "ans": [
+        "410"
+      ],
+      "unit_label": "g",
+      "h1": "合計 = 平均 × 個数 だよ。",
+      "h2": "82×5",
+      "exp": "82×5=410g。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0004",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "4回のテストの平均は 85点。はじめの3回の合計は 250点 でした。4回目は何点ですか。",
+      "ans": [
+        "90"
+      ],
+      "unit_label": "点",
+      "h1": "まず4回分の合計を出そう。そこから3回分の合計を引くよ。",
+      "h2": "85×4−250",
+      "exp": "85×4=340。340−250=90点。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0005",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "3人の身長の平均は 140cm です。3人の身長の合計は何cmですか。",
+      "ans": [
+        "420"
+      ],
+      "unit_label": "cm",
+      "h1": "合計 = 平均 × 人数。",
+      "h2": "140×3",
+      "exp": "140×3=420cm。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0006",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "62点、78点、85点、75点 の4回のテスト。平均は何点ですか。",
+      "ans": [
+        "75"
+      ],
+      "unit_label": "点",
+      "h1": "まず合計。たし算をていねいに。",
+      "h2": "(62+78+85+75)÷4",
+      "exp": "合計は300。300÷4=75点。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0007",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "1日に平均96ページの本を5日間読みました。ぜんぶで何ページ読みましたか。",
+      "ans": [
+        "480"
+      ],
+      "unit_label": "ページ",
+      "h1": "合計 = 平均 × 日数。",
+      "h2": "96×5",
+      "exp": "96×5=480ページ。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0008",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "2、4、6、8、10 の5つの数の平均はいくつですか。",
+      "ans": [
+        "6"
+      ],
+      "unit_label": "",
+      "h1": "合計を出して5でわる。まん中の数になるかな?",
+      "h2": "(2+4+6+8+10)÷5",
+      "exp": "合計30。30÷5=6。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0009",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "6人の体重の平均は 38kg です。6人の合計は何kgですか。",
+      "ans": [
+        "228"
+      ],
+      "unit_label": "kg",
+      "h1": "合計 = 平均 × 人数。38×6は 38×2×3 でもいいよ。",
+      "h2": "38×6",
+      "exp": "38×6=228kg。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0010",
+      "unit": "平均算",
+      "kai": null,
+      "level": "基",
+      "cat": "きほん",
+      "q": "3回のテストの合計は 219点 でした。平均は何点ですか。",
+      "ans": [
+        "73"
+      ],
+      "unit_label": "点",
+      "h1": "平均 = 合計 ÷ 回数。",
+      "h2": "219÷3",
+      "exp": "219÷3=73点。",
+      "src": "v1_bank",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0011",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "4回のテストの平均は 78点。5回目に 88点 をとると、5回の平均は何点になりますか。",
+      "ans": [
+        "80"
+      ],
+      "unit_label": "点",
+      "h1": "まず4回分の合計(78×4)を出して、88をたして5でわるよ。",
+      "h2": "(78×4+88)÷5",
+      "exp": "78×4=312。312+88=400。400÷5=80点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0012",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "3回のテストの平均は 70点。4回の平均を 75点 にするには、4回目に何点とればよいですか。",
+      "ans": [
+        "90"
+      ],
+      "unit_label": "点",
+      "h1": "「なりたい合計」から「今の合計」を引くよ。",
+      "h2": "75×4−70×3",
+      "exp": "75×4=300。70×3=210。300−210=90点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0013",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "男子4人の平均は 80点、女子6人の平均は 70点。10人全体の平均は何点ですか。",
+      "ans": [
+        "74"
+      ],
+      "unit_label": "点",
+      "h1": "平均どうしをたして2でわるのはまちがい! それぞれの合計を出そう。",
+      "h2": "(80×4+70×6)÷10",
+      "exp": "320+420=740。740÷10=74点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0014",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "A、B、C 3人の点数の平均は 60点。AとBの2人の平均は 55点。Cは何点ですか。",
+      "ans": [
+        "70"
+      ],
+      "unit_label": "点",
+      "h1": "3人の合計から、2人の合計を引くとCが残るよ。",
+      "h2": "60×3−55×2",
+      "exp": "180−110=70点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0015",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "5回のテストの平均は 82点。そのうち4回の平均は 80点。残りの1回は何点ですか。",
+      "ans": [
+        "90"
+      ],
+      "unit_label": "点",
+      "h1": "5回の合計 − 4回の合計 = 残り1回。",
+      "h2": "82×5−80×4",
+      "exp": "410−320=90点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0016",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "6個の数の平均は 50。1個をのぞくと、残り5個の平均は 48 になりました。のぞいた数はいくつですか。",
+      "ans": [
+        "60"
+      ],
+      "unit_label": "",
+      "h1": "6個の合計 − 5個の合計 = のぞいた数。",
+      "h2": "50×6−48×5",
+      "exp": "300−240=60。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0017",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "国語・理科・社会の3教科の平均は 82点。算数を入れた4教科の平均は 85点。算数は何点ですか。",
+      "ans": [
+        "94"
+      ],
+      "unit_label": "点",
+      "h1": "4教科の合計 − 3教科の合計 = 算数。",
+      "h2": "85×4−82×3",
+      "exp": "340−246=94点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0018",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "4回のテストの平均は 73点。5回の平均を 75点 にするには、5回目に何点とればよいですか。",
+      "ans": [
+        "83"
+      ],
+      "unit_label": "点",
+      "h1": "なりたい合計(75×5)から今の合計(73×4)を引く。",
+      "h2": "75×5−73×4",
+      "exp": "375−292=83点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0019",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "これまでのテストの平均は 64点。次のテストで 94点 をとると、平均がちょうど 70点 になります。これまでに何回テストを受けましたか。",
+      "ans": [
+        "4"
+      ],
+      "unit_label": "回",
+      "h1": "94点は平均70より24点多い。この24点を、今までの回数に6点ずつ配ると考えよう(70−64=6)。",
+      "h2": "(94−70)÷(70−64)",
+      "exp": "24÷6=4回。たしかめ: 64×4=256、256+94=350、350÷5=70点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0020",
+      "unit": "平均算",
+      "kai": null,
+      "level": "共",
+      "cat": "レベルアップ",
+      "q": "男子15人の平均は 60点、女子10人の平均は 65点。クラス25人全体の平均は何点ですか。",
+      "ans": [
+        "62"
+      ],
+      "unit_label": "点",
+      "h1": "それぞれの合計を出してから、25でわるよ。",
+      "h2": "(60×15+65×10)÷25",
+      "exp": "900+650=1550。1550÷25=62点。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0021",
+      "unit": "小数の割り算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "3.6 ÷ 0.4 =",
+      "ans": [
+        "9"
+      ],
+      "unit_label": "",
+      "h1": "わる数を整数に。両方を10倍して 36÷4 にしよう。",
+      "h2": "36÷4",
+      "exp": "3.6÷0.4=36÷4=9。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0022",
+      "unit": "小数のかけ算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "12.5 × 8 =",
+      "ans": [
+        "100"
+      ],
+      "unit_label": "",
+      "h1": "12.5は「8個で100」になる数。125×8を計算して小数点を打ってもOK。",
+      "h2": "125×8=1000 → 100",
+      "exp": "12.5×8=100。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0023",
+      "unit": "逆算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "□ × 4 − 6 = 30 のとき、□はいくつ?",
+      "ans": [
+        "9"
+      ],
+      "unit_label": "",
+      "h1": "逆算はうしろから。まず「−6する前」は 30+6。",
+      "h2": "(30+6)÷4",
+      "exp": "36÷4=9。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0024",
+      "unit": "逆算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "48 ÷ (□ + 2) = 6 のとき、□はいくつ?",
+      "ans": [
+        "6"
+      ],
+      "unit_label": "",
+      "h1": "(□+2)は「48をわって6になる数」。まず 48÷6。",
+      "h2": "48÷6−2",
+      "exp": "48÷6=8。8−2=6。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0025",
+      "unit": "逆算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "(17 − □) ÷ 3 = 4 のとき、□はいくつ?",
+      "ans": [
+        "5"
+      ],
+      "unit_label": "",
+      "h1": "(17−□)は「3でわって4になる数」。まず 4×3。",
+      "h2": "17−4×3",
+      "exp": "4×3=12。17−12=5。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0026",
+      "unit": "分数のたし算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "2/3 + 1/6 = (分数で答えてね。例: 5/6 )",
+      "ans": [
+        "5/6"
+      ],
+      "unit_label": "",
+      "h1": "分母を6にそろえよう。2/3 = 4/6 だよ。",
+      "h2": "4/6+1/6",
+      "exp": "4/6+1/6=5/6。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0027",
+      "unit": "分数のひき算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "3/4 − 1/2 = (分数で答えてね)",
+      "ans": [
+        "1/4"
+      ],
+      "unit_label": "",
+      "h1": "分母を4にそろえよう。1/2 = 2/4。",
+      "h2": "3/4−2/4",
+      "exp": "3/4−2/4=1/4。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0028",
+      "unit": "小数と分数",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "0.25 を分数になおすと? (約分してね)",
+      "ans": [
+        "1/4"
+      ],
+      "unit_label": "",
+      "h1": "0.25 = 25/100。25でわって約分しよう。",
+      "h2": "25/100=1/4",
+      "exp": "0.25=25/100=1/4。",
+      "src": "v1_bank",
+      "errType": "概念混同"
+    },
+    {
+      "id": "M0029",
+      "unit": "文章題(単価)",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "1mが 120円 のリボンを 3.5m 買います。代金は何円ですか。",
+      "ans": [
+        "420"
+      ],
+      "unit_label": "円",
+      "h1": "代金 = 1mのねだん × 長さ。",
+      "h2": "120×3.5",
+      "exp": "120×3.5=420円。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0030",
+      "unit": "和差算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "2つの数の和は 50、差は 10 です。大きいほうの数はいくつですか。",
+      "ans": [
+        "30"
+      ],
+      "unit_label": "",
+      "h1": "和差算! 大きいほう = (和+差)÷2。線分図をかこう。",
+      "h2": "(50+10)÷2",
+      "exp": "(50+10)÷2=30。小さいほうは20。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0031",
+      "unit": "分配算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "大小2つの数の和は 72 で、大きい数は小さい数の 2倍 です。小さい数はいくつですか。",
+      "ans": [
+        "24"
+      ],
+      "unit_label": "",
+      "h1": "小さい数を①とすると、大きい数は②。あわせて③=72。",
+      "h2": "72÷3",
+      "exp": "72÷(1+2)=24。大きい数は48。",
+      "src": "v1_bank",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0032",
+      "unit": "小数の割り算",
+      "kai": null,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "7.2 ÷ 0.9 =",
+      "ans": [
+        "8"
+      ],
+      "unit_label": "",
+      "h1": "両方を10倍して 72÷9 に。",
+      "h2": "72÷9",
+      "exp": "7.2÷0.9=72÷9=8。",
+      "src": "v1_bank",
+      "errType": "計算"
+    },
+    {
+      "id": "M0033",
+      "unit": "割合とは",
+      "kai": 35,
+      "level": "基",
+      "cat": "割合",
+      "q": "0.25 を百分率(%)になおすと何%ですか。",
+      "ans": [
+        "25"
+      ],
+      "unit_label": "%",
+      "h1": "小数を%になおすときは100倍するよ。",
+      "h2": "0.25×100",
+      "exp": "0.25×100=25%。小数→%は100倍、%→小数は100でわる。この往復を迷わないことが割合の入口。",
+      "src": "20260704",
+      "errType": "計算"
+    },
+    {
+      "id": "M0034",
+      "unit": "割合とは",
+      "kai": 35,
+      "level": "基",
+      "cat": "割合",
+      "q": "7% を小数になおすといくつですか。",
+      "ans": [
+        "0.07"
+      ],
+      "unit_label": "",
+      "h1": "%を小数になおすときは100でわるよ。",
+      "h2": "7÷100",
+      "exp": "7÷100=0.07。1けたの%は0.0□になる点に注意(0.7としないこと)。",
+      "src": "20260704",
+      "errType": "計算"
+    },
+    {
+      "id": "M0035",
+      "unit": "割合とは",
+      "kai": 35,
+      "level": "基",
+      "cat": "割合",
+      "q": "0.36 を歩合であらわすと何割何分ですか。(例: 3割6分)",
+      "ans": [
+        "3割6分",
+        "さんわりろくぶ"
+      ],
+      "unit_label": "",
+      "h1": "小数第1位が『割』、小数第2位が『分』だよ。",
+      "h2": "0.36 → 3が割、6が分",
+      "exp": "0.36=3割6分。小数第1位=割、第2位=分、第3位=厘。0.36=36%でもある。3つの表し方を行き来できるようにしよう。",
+      "src": "20260704",
+      "errType": "概念混同"
+    },
+    {
+      "id": "M0036",
+      "unit": "割合と線分図",
+      "kai": 36,
+      "level": "基",
+      "cat": "割合",
+      "q": "定員300人の80%は何人ですか。",
+      "ans": [
+        "240"
+      ],
+      "unit_label": "人",
+      "h1": "くらべる量 = もとにする量 × 割合。まず80%を小数に。",
+      "h2": "300×0.8",
+      "exp": "300×0.8=240人。『もとにする量』は『〜の』の前にある数(ここでは300人)。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0037",
+      "unit": "割合と線分図",
+      "kai": 36,
+      "level": "基",
+      "cat": "割合",
+      "q": "60人は150人の何%ですか。",
+      "ans": [
+        "40"
+      ],
+      "unit_label": "%",
+      "h1": "割合 = くらべる量 ÷ もとにする量。『〜の』の前がもとにする量。",
+      "h2": "60÷150×100",
+      "exp": "60÷150=0.4 → 40%。わる順番を逆にすると2.5になってしまうので、どちらがもとにする量かを線分図で確かめよう。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0038",
+      "unit": "割合と線分図",
+      "kai": 36,
+      "level": "共",
+      "cat": "割合",
+      "q": "ある数の25%が30です。ある数はいくつですか。",
+      "ans": [
+        "120"
+      ],
+      "unit_label": "",
+      "h1": "もとにする量 = くらべる量 ÷ 割合。答えから逆にたどるよ。",
+      "h2": "30÷0.25",
+      "exp": "30÷0.25=120。『ある数』がもとにする量。逆にたどるときはわり算になる。線分図で全体を①と書くと迷わない。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0039",
+      "unit": "相当算",
+      "kai": 37,
+      "level": "共",
+      "cat": "割合",
+      "q": "本を全体の3/5まで読んだところ、残りは60ページでした。全体は何ページですか。",
+      "ans": [
+        "150"
+      ],
+      "unit_label": "ページ",
+      "h1": "残りは全体のどれだけ? 1 − 3/5 を考えよう。",
+      "h2": "60÷(2/5)",
+      "exp": "残り=1−3/5=2/5。2/5が60ページなので、全体=60÷2/5=150ページ。『残り』が何分のいくつかを先に出すのが相当算のコツ。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0040",
+      "unit": "相当算",
+      "kai": 37,
+      "level": "共",
+      "cat": "割合",
+      "q": "あるクラスの40%が男子で、男子は14人です。クラス全体は何人ですか。",
+      "ans": [
+        "35"
+      ],
+      "unit_label": "人",
+      "h1": "全体を①(=1)として、その0.4が14人だよ。",
+      "h2": "14÷0.4",
+      "exp": "14÷0.4=35人。全体をもとにする量とみて、わり算で戻す。線分図に①と0.4を書き込むと確実。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0041",
+      "unit": "売買と割合",
+      "kai": 38,
+      "level": "基",
+      "cat": "割合",
+      "q": "原価800円の品物に、25%の利益を見こんで定価をつけました。定価は何円ですか。",
+      "ans": [
+        "1000"
+      ],
+      "unit_label": "円",
+      "h1": "定価 = 原価 ×(1 + 利益の割合)。",
+      "h2": "800×1.25",
+      "exp": "800×1.25=1000円。『25%の利益を見こむ』は原価の1.25倍。原価がもとにする量になる。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "M0042",
+      "unit": "売買と割合",
+      "kai": 38,
+      "level": "基",
+      "cat": "割合",
+      "q": "定価1200円の品物を2割引きで買いました。代金は何円ですか。",
+      "ans": [
+        "960"
+      ],
+      "unit_label": "円",
+      "h1": "2割引き = 定価の(1 − 0.2)倍。",
+      "h2": "1200×0.8",
+      "exp": "1200×0.8=960円。『2割引き』は0.2をかけるのではなく、0.8をかける。引いた残りを考えるのがポイント。",
+      "src": "20260718",
+      "errType": "概念混同"
+    },
+    {
+      "id": "M0043",
+      "unit": "売買と割合",
+      "kai": 38,
+      "level": "共",
+      "cat": "割合",
+      "q": "原価1500円の品物に2割の利益を見こんで定価をつけ、その定価の1割引きで売りました。売ったねだんは何円ですか。",
+      "ans": [
+        "1620"
+      ],
+      "unit_label": "円",
+      "h1": "2段階だよ。まず定価を出してから、そこから1割引く。",
+      "h2": "1500×1.2×0.9",
+      "exp": "定価=1500×1.2=1800円。売価=1800×0.9=1620円。2段階の問題は、途中の定価を必ず書き出してから次に進もう。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "M0044",
+      "unit": "分数と四則混合計算・逆算",
+      "kai": 26,
+      "level": "共",
+      "cat": "とりこぼし",
+      "q": "□ × 0.4 + 1/5 = 1 のとき、□はいくつ?",
+      "ans": [
+        "2"
+      ],
+      "unit_label": "",
+      "h1": "1/5 = 0.2 だよ。まず『+0.2する前』の数を出そう。",
+      "h2": "(1−0.2)÷0.4",
+      "exp": "1−0.2=0.8。0.8÷0.4=2。分数と小数がまざったら、どちらかにそろえてから逆算する。",
+      "src": "20260704",
+      "errType": "計算"
+    }
+  ]
+}
+`;
+/*==BANK_M_END==*/
+
+/*==BANK_R_START==*/
+const BANK_R_RAW = `
+{
+  "bankVersion": "R_2026_07_26",
+  "subject": "R",
+  "cats": [
+    {
+      "cat": "水よう液",
+      "icon": "🧪",
+      "desc": "6つの水よう液×とけているもの×何性×色 + とける量の計算"
+    },
+    {
+      "cat": "天体",
+      "icon": "🌞",
+      "desc": "太陽の高さと星・月の動きをマスター"
+    },
+    {
+      "cat": "生き物",
+      "icon": "🐛",
+      "desc": "こん虫・せきつい動物のなかま分けを取りもどす"
+    },
+    {
+      "cat": "ばね・てこ",
+      "icon": "⚖️",
+      "desc": "直列・並列の合成とてこのつり合いを手順で固める"
+    }
+  ],
+  "questions": [
+    {
+      "id": "R0001",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "塩酸(えんさん)にとけているものは何ですか。",
+      "ans": [
+        "塩化水素",
+        "えんかすいそ"
+      ],
+      "unit_label": "",
+      "h1": "「塩酸」には、ある気体が水にとけているよ。しょっぱい食塩ではないよ。",
+      "h2": "「塩化水◯」の水よう液が塩酸。◯には『素(そ)』が入るよ。",
+      "exp": "塩酸にとけているのは『塩化水素』という気体。よく間違える『塩化ナトリウム』は食塩(食塩水にとけているもの)だよ。塩酸は気体がとけているので、蒸発させても何も残らない。",
+      "src": "20260620",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0002",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "石灰水(せっかいすい)にとけているものは何ですか。",
+      "ans": [
+        "水酸化カルシウム",
+        "すいさんかかるしうむ",
+        "水さんかカルシウム"
+      ],
+      "unit_label": "",
+      "h1": "白い粉が水にとけているよ。『石(いし)』ではないところに注意!",
+      "h2": "『水酸化カル◯◯ム』。カルシウムのなかまだよ。",
+      "exp": "石灰水にとけているのは『水酸化カルシウム』。よく間違える『石灰石』は炭酸カルシウムという別のもので、水にとけないよ。石灰水に二酸化炭素を通すと白くにごるのがポイント。",
+      "src": "20260620",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0003",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "食塩水にとけているものは何ですか。",
+      "ans": [
+        "食塩",
+        "塩化ナトリウム",
+        "しお",
+        "えんかナトリウム",
+        "えんかなとりうむ"
+      ],
+      "unit_label": "",
+      "h1": "料理につかう、しょっぱいもの。",
+      "h2": "『食塩』でも『塩化ナトリウム』でも正解。同じものの2つの呼び方だよ。",
+      "exp": "食塩水にとけているのは食塩=塩化ナトリウム。固体がとけているので、蒸発させると白い粒(つぶ)が残る。液性は中性。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0004",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "炭酸水(たんさんすい)にとけているものは何ですか。",
+      "ans": [
+        "二酸化炭素",
+        "にさんかたんそ"
+      ],
+      "unit_label": "",
+      "h1": "シュワシュワのあわの正体。石灰水を白くにごらせる気体だよ。",
+      "h2": "『◯酸化炭素』。◯には『二』が入るよ。",
+      "exp": "炭酸水にとけているのは『二酸化炭素』という気体。気体がとけているので、蒸発させても何も残らない。液性は酸性。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0005",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "アンモニア水にとけているものは何ですか。",
+      "ans": [
+        "アンモニア",
+        "あんもにあ"
+      ],
+      "unit_label": "",
+      "h1": "名前がそのままヒント。鼻をさすにおいのする気体だよ。",
+      "h2": "『アンモニア』という気体がとけているよ。",
+      "exp": "アンモニア水にとけているのは『アンモニア』という気体。液性はアルカリ性で、鼻をさすようなにおいがある。蒸発させても何も残らない。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0006",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "ほう酸水にとけているものは何ですか。",
+      "ans": [
+        "ほう酸",
+        "ほうさん",
+        "ホウ酸"
+      ],
+      "unit_label": "",
+      "h1": "名前がそのままヒント。白い固体がとけているよ。",
+      "h2": "『ほう酸』という固体がとけているよ。",
+      "exp": "ほう酸水にとけているのは『ほう酸』という固体。固体がとけているので、蒸発させると固体が残る。液性は酸性。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0007",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "塩酸は、酸性・中性・アルカリ性のどれですか。",
+      "ans": [
+        "酸性",
+        "さんせい"
+      ],
+      "unit_label": "",
+      "h1": "名前に『酸』の字が入っているね。",
+      "h2": "『◯性』の◯は、名前と同じ字が入るよ。",
+      "exp": "塩酸は酸性。酸性のなかまは他に炭酸水・ほう酸水。青リトマス紙を赤に変え、BTB液は黄色になる。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0008",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "石灰水は、酸性・中性・アルカリ性のどれですか。",
+      "ans": [
+        "アルカリ性",
+        "あるかりせい"
+      ],
+      "unit_label": "",
+      "h1": "赤リトマス紙を青に変えるなかまだよ。",
+      "h2": "石灰水とアンモニア水は同じ性質。『ア◯カリ性』。",
+      "exp": "石灰水はアルカリ性。アルカリ性のなかまは他にアンモニア水。赤リトマス紙を青に変え、BTB液は青色になる。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0009",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "BTB液を入れると黄色になるのは、何性の水よう液ですか。",
+      "ans": [
+        "酸性",
+        "さんせい"
+      ],
+      "unit_label": "",
+      "h1": "BTB液は『黄・緑・青』の3色。黄色は仲間はずれの色だよ。",
+      "h2": "黄色=酸性、緑色=中性、青色=アルカリ性。",
+      "exp": "BTB液は酸性で黄色、中性で緑色、アルカリ性で青色。『きいろ→さんせい』とセットで覚えよう。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0010",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "BTB液を入れると青色になるのは、何性の水よう液ですか。",
+      "ans": [
+        "アルカリ性",
+        "あるかりせい"
+      ],
+      "unit_label": "",
+      "h1": "BTB液の3色は『黄・緑・青』。青は酸性の反対がわの色だよ。",
+      "h2": "黄色=酸性、緑色=中性、青色=アルカリ性。",
+      "exp": "BTB液はアルカリ性で青色。酸性は黄色、中性は緑色。石灰水やアンモニア水を入れると青くなる。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0011",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "基",
+      "cat": "水よう液",
+      "q": "石灰水に二酸化炭素を通すと、どうなりますか。",
+      "ans": [
+        "白くにごる",
+        "しろくにごる",
+        "白くにごる。"
+      ],
+      "unit_label": "",
+      "h1": "石灰水は二酸化炭素を見つけるための液だよ。色ではなく『にごり』に注目。",
+      "h2": "『白く◯◯る』。◯◯には『にご』が入るよ。",
+      "exp": "石灰水に二酸化炭素を通すと白くにごる。これは二酸化炭素があるか調べる方法。息を石灰水にふきこむと白くにごるのも同じ理由。",
+      "src": "20260620",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0012",
+      "unit": "いろいろな水よう液",
+      "kai": 24,
+      "level": "共",
+      "cat": "水よう液",
+      "q": "気体がとけている水よう液を蒸発させると、あとに何が残りますか。",
+      "ans": [
+        "何も残らない",
+        "なにものこらない",
+        "残らない",
+        "のこらない"
+      ],
+      "unit_label": "",
+      "h1": "気体は、蒸発させると空気中へにげていくよね。",
+      "h2": "とけているものが気体なら、あとには……?",
+      "exp": "気体がとけている塩酸・炭酸水・アンモニア水は、蒸発させても何も残らない。逆に固体がとけている食塩水・石灰水・ほう酸水は、蒸発させると固体が残る。『残る/残らない』で気体か固体かを見分けられる。",
+      "src": "20260620",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0013",
+      "unit": "ある地点での太陽の動き",
+      "kai": 20,
+      "level": "基",
+      "cat": "天体",
+      "q": "太陽は1時間に約何度、動いて見えますか。",
+      "ans": [
+        "15"
+      ],
+      "unit_label": "度",
+      "h1": "地球は24時間で1回転(360度)するよ。",
+      "h2": "360 ÷ 24 = ?",
+      "exp": "太陽は1時間に約15度動いて見える(360度÷24時間=15度)。この『15度』は時差や星の動きでも使う超重要な数字。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0014",
+      "unit": "ある地点での太陽の動き",
+      "kai": 20,
+      "level": "基",
+      "cat": "天体",
+      "q": "緯度(いど)35度の地点で、春分の日の南中高度は何度ですか。",
+      "ans": [
+        "55"
+      ],
+      "unit_label": "度",
+      "h1": "春分・秋分の南中高度は『90 − 緯度』で出せるよ。",
+      "h2": "90 − 35 = ?",
+      "exp": "春分・秋分の南中高度=90−緯度=90−35=55度。まずこの基本の形を覚えると、夏至・冬至はここから±するだけになる。",
+      "src": "20260627",
+      "errType": "計算"
+    },
+    {
+      "id": "R0015",
+      "unit": "ある地点での太陽の動き",
+      "kai": 20,
+      "level": "共",
+      "cat": "天体",
+      "q": "緯度35度の地点で、夏至の日の南中高度は何度ですか。(地軸のかたむき23.4度)",
+      "ans": [
+        "78.4",
+        "78.5"
+      ],
+      "unit_label": "度",
+      "h1": "夏は太陽が高い。春分の高さ(55度)より高くなるよ。",
+      "h2": "夏至=(90−緯度)+23.4。つまり 55 + 23.4 = ?",
+      "exp": "夏至の南中高度=(90−緯度)+23.4=55+23.4=78.4度。夏は太陽が高くのぼるので『+23.4』。冬至は反対に『−23.4』。※教材によっては23.5度で計算し78.5度になる場合もある。",
+      "src": "20260627",
+      "errType": "計算"
+    },
+    {
+      "id": "R0016",
+      "unit": "ある地点での太陽の動き",
+      "kai": 20,
+      "level": "共",
+      "cat": "天体",
+      "q": "緯度35度の地点で、冬至の日の南中高度は何度ですか。(地軸のかたむき23.4度)",
+      "ans": [
+        "31.6",
+        "31.5"
+      ],
+      "unit_label": "度",
+      "h1": "冬は太陽が低い。春分の高さ(55度)より低くなるよ。",
+      "h2": "冬至=(90−緯度)−23.4。つまり 55 − 23.4 = ?",
+      "exp": "冬至の南中高度=(90−緯度)−23.4=55−23.4=31.6度。冬は太陽が低いので『−23.4』。夏至(+23.4)とセットで覚えよう。※教材によっては23.5度で計算し31.5度になる場合もある。",
+      "src": "20260627",
+      "errType": "計算"
+    },
+    {
+      "id": "R0017",
+      "unit": "いろいろな地点での太陽の動き",
+      "kai": 21,
+      "level": "基",
+      "cat": "天体",
+      "q": "経度が15度ちがうと、時刻(じこく)は何時間ちがいますか。",
+      "ans": [
+        "1"
+      ],
+      "unit_label": "時間",
+      "h1": "太陽は1時間に15度動いたね。だから経度15度は……?",
+      "h2": "15度動くのにかかる時間を考えよう。",
+      "exp": "経度15度で時差は1時間(太陽が1時間に15度動くから)。経度の差÷15=時差(時間)で計算できる。まずこの関係だけ確実に。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0018",
+      "unit": "いろいろな地点での太陽の動き",
+      "kai": 21,
+      "level": "基",
+      "cat": "天体",
+      "q": "日本の標準時のもとになっている経度は、東経何度ですか。",
+      "ans": [
+        "135",
+        "東経135",
+        "東経135度",
+        "135度"
+      ],
+      "unit_label": "度",
+      "h1": "兵庫県の明石市(あかしし)を通る経線だよ。",
+      "h2": "『東経1◯◯度』。◯◯には『35』が入るよ。",
+      "exp": "日本の標準時は東経135度(兵庫県明石市)を基準にしている。世界の基準は経度0度(イギリス)。まず日本の135度を覚えよう。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0019",
+      "unit": "星の動き",
+      "kai": 22,
+      "level": "基",
+      "cat": "天体",
+      "q": "北の空の星は、何という星を中心にして回って見えますか。",
+      "ans": [
+        "北極星",
+        "ほっきょくせい"
+      ],
+      "unit_label": "",
+      "h1": "ほとんど動かず、真北(まきた)にある星だよ。",
+      "h2": "『北極(ほっきょく)』の名がつく星。",
+      "exp": "北の空の星は北極星を中心に、反時計回り(左回り)に回って見える。北極星はほぼ動かないので方角の目印になる。",
+      "src": "20260606",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0020",
+      "unit": "星の動き",
+      "kai": 22,
+      "level": "基",
+      "cat": "天体",
+      "q": "星は1時間に約何度、動いて見えますか。",
+      "ans": [
+        "15"
+      ],
+      "unit_label": "度",
+      "h1": "太陽と同じ理由(地球の自転)で動くよ。",
+      "h2": "太陽と同じ数字。1時間で……?",
+      "exp": "星も太陽と同じく1時間に約15度動いて見える(地球が自転しているため)。24時間でほぼ1周(360度)する。",
+      "src": "20260606",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0021",
+      "unit": "星の動き",
+      "kai": 22,
+      "level": "基",
+      "cat": "天体",
+      "q": "太陽や星は、東・西のどちらからどちらへ動いて見えますか。(例:○から○)",
+      "ans": [
+        "東から西",
+        "ひがしからにし",
+        "東から西へ",
+        "東→西"
+      ],
+      "unit_label": "",
+      "h1": "太陽が朝のぼる方角と、夕方しずむ方角を思い出そう。",
+      "h2": "のぼる方角(東)から、しずむ方角(西)へ。",
+      "exp": "太陽も星も東からのぼって西へしずむ(東→西)。これは地球が西から東へ自転しているため。方角に迷ったら、朝日がのぼる東を基準にしよう。",
+      "src": "20260606",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0022",
+      "unit": "月の動き",
+      "kai": 23,
+      "level": "基",
+      "cat": "天体",
+      "q": "満月(まんげつ)が南の空にいちばん高くのぼるのは、およそ何時ごろですか。",
+      "ans": [
+        "0時",
+        "午前0時",
+        "真夜中",
+        "夜中の12時",
+        "24時"
+      ],
+      "unit_label": "",
+      "h1": "満月は夕方に東からのぼり、明け方に西へしずむよ。ちょうどその真ん中の時刻は?",
+      "h2": "夕方(18時ごろ)にのぼって、明け方(6時ごろ)にしずむ。その真ん中は……?",
+      "exp": "満月は夕方に東からのぼり、真夜中(0時ごろ)に南中し、明け方に西へしずむ。太陽とちょうど反対の位置にあるからだよ。",
+      "src": "20260606",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0023",
+      "unit": "足に節がある仲間たち",
+      "kai": 14,
+      "level": "基",
+      "cat": "生き物",
+      "q": "こん虫のあしは、何本ありますか。",
+      "ans": [
+        "6",
+        "6本"
+      ],
+      "unit_label": "本",
+      "h1": "クモは8本だけど、こん虫はそれより少ないよ。",
+      "h2": "こん虫のあしは3対(つい)。3×2=?",
+      "exp": "こん虫のあしは6本。クモ(8本)やダンゴムシはこん虫ではない。あしの本数はこん虫を見分ける大事な目印。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0024",
+      "unit": "足に節がある仲間たち",
+      "kai": 14,
+      "level": "基",
+      "cat": "生き物",
+      "q": "こん虫のあしは、からだのどの部分から出ていますか。(頭・むね・はらのどれ)",
+      "ans": [
+        "むね",
+        "胸"
+      ],
+      "unit_label": "",
+      "h1": "頭でもはらでもない、まん中の部分だよ。",
+      "h2": "からだの中央『◯ね』から6本のあしが出るよ。",
+      "exp": "こん虫のあしは6本とも『むね』から出ている。はねもむねから出る。こん虫のからだは頭・むね・はらの3つに分かれ、あし・はねはすべてむねについている。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0025",
+      "unit": "足に節がある仲間たち",
+      "kai": 14,
+      "level": "基",
+      "cat": "生き物",
+      "q": "こん虫のからだは、いくつの部分に分かれていますか。",
+      "ans": [
+        "3",
+        "3つ"
+      ],
+      "unit_label": "つ",
+      "h1": "頭・むね・はら…数えてみよう。",
+      "h2": "頭/むね/はらで◯つ。",
+      "exp": "こん虫のからだは頭・むね・はらの3つに分かれる。あしとはねはすべて『むね』についているのがポイント。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0026",
+      "unit": "足に節がある仲間たち",
+      "kai": 14,
+      "level": "基",
+      "cat": "生き物",
+      "q": "チョウのように『さなぎ』の時期がある育ち方を、何変態といいますか。",
+      "ans": [
+        "完全変態",
+        "かんぜんへんたい",
+        "完全へんたい"
+      ],
+      "unit_label": "",
+      "h1": "たまご→よう虫→さなぎ→成虫、と『さなぎ』を通る育ち方だよ。",
+      "h2": "『◯全変態』。◯には『完』が入るよ。",
+      "exp": "さなぎになる育ち方を完全変態という(チョウ・カブトムシ・ハチなど)。さなぎにならない育ち方は不完全変態(バッタ・トンボ・セミなど)。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0027",
+      "unit": "足に節がある仲間たち",
+      "kai": 14,
+      "level": "基",
+      "cat": "生き物",
+      "q": "バッタのように『さなぎ』にならない育ち方を、何変態といいますか。",
+      "ans": [
+        "不完全変態",
+        "ふかんぜんへんたい",
+        "不完全へんたい"
+      ],
+      "unit_label": "",
+      "h1": "たまご→よう虫→成虫、と『さなぎ』を通らない育ち方だよ。",
+      "h2": "『◯完全変態』。◯には『不』が入るよ。",
+      "exp": "さなぎにならない育ち方を不完全変態という(バッタ・トンボ・セミ・コオロギなど)。さなぎになるのは完全変態(チョウ・カブトムシなど)。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0028",
+      "unit": "背骨がある仲間たち",
+      "kai": 15,
+      "level": "基",
+      "cat": "生き物",
+      "q": "背骨のある動物を5つのなかまに分けたとき、魚類・両生類・鳥類・ほ乳類とあと1つは何類ですか。",
+      "ans": [
+        "は虫類",
+        "はちゅうるい",
+        "ハ虫類",
+        "爬虫類"
+      ],
+      "unit_label": "",
+      "h1": "トカゲ・ヘビ・カメのなかまだよ。",
+      "h2": "『◯虫類』。◯には『は(爬)』が入るよ。",
+      "exp": "せきつい動物(背骨のある動物)は、魚類・両生類・は虫類・鳥類・ほ乳類の5つ。は虫類はトカゲ・ヘビ・カメ・ワニなど。5つ全部を言えるようにしておこう。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0029",
+      "unit": "背骨がある仲間たち",
+      "kai": 15,
+      "level": "基",
+      "cat": "生き物",
+      "q": "一生えらで呼吸し、水中に卵をうむせきつい動物のなかまを、何類といいますか。",
+      "ans": [
+        "魚類",
+        "ぎょるい"
+      ],
+      "unit_label": "",
+      "h1": "水の中でくらし、うろことひれを持つなかまだよ。",
+      "h2": "『◯類』。◯には『魚』が入るよ。",
+      "exp": "一生えらで呼吸し、水中に卵をうむのは魚類。カエル(両生類)は子はえら呼吸だが親は肺呼吸に変わる点がちがう。呼吸のしかたでなかまを見分けよう。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0030",
+      "unit": "背骨がある仲間たち",
+      "kai": 15,
+      "level": "基",
+      "cat": "生き物",
+      "q": "卵ではなく、親と似たすがたの子をうむうまれ方を何といいますか。",
+      "ans": [
+        "胎生",
+        "たいせい"
+      ],
+      "unit_label": "",
+      "h1": "イヌやヒトのように、おなかの中である程度育ってからうまれる方だよ。",
+      "h2": "『◯生』。◯には『胎(たい)』が入るよ。",
+      "exp": "子をうむうまれ方を胎生(たいせい)といい、ほ乳類がこれにあたる。卵をうむうまれ方は卵生(らんせい)で、魚類・両生類・は虫類・鳥類がこれ。ほ乳類だけが胎生。",
+      "src": "20260627",
+      "errType": "剥落"
+    },
+    {
+      "id": "R0031",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "基",
+      "cat": "ばね・てこ",
+      "q": "10gのおもりをつるすと2cmのびるばねがあります。1gあたり何cmのびますか。",
+      "ans": [
+        "0.2"
+      ],
+      "unit_label": "cm",
+      "h1": "『1gあたり』はわり算で出すよ。",
+      "h2": "2÷10",
+      "exp": "2÷10=0.2cm。ばねの問題は、まず『1gあたり何cmのびるか』を出すのが第1ステップ。ここを最初に書いておくと後がすべて楽になる。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0032",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "基",
+      "cat": "ばね・てこ",
+      "q": "もとの長さ12cm、10gで2cmのびるばねに、30gのおもりをつるしました。ばね全体の長さは何cmですか。",
+      "ans": [
+        "18"
+      ],
+      "unit_label": "cm",
+      "h1": "『のび』と『全体の長さ』はちがうよ。のびを出してから、もとの長さをたそう。",
+      "h2": "12 + 0.2×30",
+      "exp": "のび=0.2×30=6cm。全体=12+6=18cm。『のびは何cm?』と『長さは何cm?』のどちらを聞かれているか、問題文に線を引いて確認しよう。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "R0033",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "共",
+      "cat": "ばね・てこ",
+      "q": "もとの長さ15cm、10gで3cmのびるばねがあります。全体の長さが24cmになったとき、つるしたおもりは何gですか。",
+      "ans": [
+        "30"
+      ],
+      "unit_label": "g",
+      "h1": "逆にたどるよ。まず『のびた分』は何cm?",
+      "h2": "(24−15)÷0.3",
+      "exp": "のび=24−15=9cm。1gで0.3cmのびるので、9÷0.3=30g。長さから重さを求めるときは、必ず先にもとの長さを引いて『のび』にする。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "R0034",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "共",
+      "cat": "ばね・てこ",
+      "q": "同じばね2本をたてにつなぎ(直列)、いちばん下に60gのおもりをつるしました。ばね1本にかかる力は何gですか。",
+      "ans": [
+        "60"
+      ],
+      "unit_label": "g",
+      "h1": "たてにつなぐと、どちらのばねも同じおもりを支えているよ。",
+      "h2": "上のばねも下のばねも、ぶら下がっているのは同じ60g",
+      "exp": "直列(たて)につないだばねは、どちらにも60gの力がかかる。『半分になる』は間違い。だから、のびもそれぞれ60g分できる。",
+      "src": "20260718",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0035",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "共",
+      "cat": "ばね・てこ",
+      "q": "もとの長さ10cm、10gで1cmのびるばね2本をたてにつなぎ(直列)、下に40gをつるしました。全体の長さは何cmですか。",
+      "ans": [
+        "28"
+      ],
+      "unit_label": "cm",
+      "h1": "3ステップ。①1本にかかる力 ②1本の長さ ③2本分。",
+      "h2": "1本にかかる力=40g → 1本の長さ=10+4=14cm → 14×2",
+      "exp": "直列なので1本に40gずつ。のび=4cm、1本の長さ=14cm。2本で28cm。①力 →②1本の長さ →③合計、の順に必ず書き出す。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "R0036",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "共",
+      "cat": "ばね・てこ",
+      "q": "同じばね2本を横にならべ(並列)、その下の棒に60gのおもりをつるしました。ばね1本にかかる力は何gですか。",
+      "ans": [
+        "30"
+      ],
+      "unit_label": "g",
+      "h1": "2本で分けあって支えているよ。",
+      "h2": "60÷2",
+      "exp": "並列(横ならび)は2本で分担するので、1本あたり60÷2=30g。直列(たて)は分担しない、並列(横)は分担する。ここが最大の分かれ目。",
+      "src": "20260718",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0037",
+      "unit": "ばね",
+      "kai": 28,
+      "level": "共",
+      "cat": "ばね・てこ",
+      "q": "もとの長さ10cm、10gで1cmのびるばね2本を横にならべ(並列)、60gをつるしました。ばねの長さは何cmですか。",
+      "ans": [
+        "13"
+      ],
+      "unit_label": "cm",
+      "h1": "まず1本にかかる力を出そう。並列は分担するよ。",
+      "h2": "1本30g → のび3cm → 10+3",
+      "exp": "1本にかかる力=60÷2=30g。のび=3cm。長さ=10+3=13cm。並列は2本ならんでいても、長さは1本分で答える(たさない)。",
+      "src": "20260718",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "R0038",
+      "unit": "てこ",
+      "kai": 29,
+      "level": "基",
+      "cat": "ばね・てこ",
+      "q": "支点から左に20cmのところに30gのおもりをつるしました。支点から右に15cmのところに何gをつるすとつり合いますか。",
+      "ans": [
+        "40"
+      ],
+      "unit_label": "g",
+      "h1": "つり合いは『きょり × 重さ』が左右で等しくなるとき。",
+      "h2": "20×30 ÷ 15",
+      "exp": "左のはたらき=20×30=600。右も600にすればよいので、600÷15=40g。てこは必ず『きょり×重さ』を左右それぞれ計算して並べて書こう。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "R0039",
+      "unit": "てこ",
+      "kai": 29,
+      "level": "基",
+      "cat": "ばね・てこ",
+      "q": "せんぬき・くぎぬき・ピンセットのうち、支点が真ん中にある道具はどれですか。",
+      "ans": [
+        "くぎぬき",
+        "くぎ抜き"
+      ],
+      "unit_label": "",
+      "h1": "手で持つところ(力点)と、はたらくところ(作用点)の間に、支える点があるのはどれ?",
+      "h2": "くぎを抜くとき、支えになっているのは道具の曲がった部分だね。",
+      "exp": "支点が真ん中=くぎぬき。作用点が真ん中=せんぬき。力点が真ん中=ピンセット。『何が真ん中か』の3種類で覚える。",
+      "src": "20260718",
+      "errType": "用語混同"
+    },
+    {
+      "id": "R0040",
+      "unit": "てこ",
+      "kai": 29,
+      "level": "共",
+      "cat": "ばね・てこ",
+      "q": "てこで小さな力で物を動かすには、力点を支点からどうすればよいですか。",
+      "ans": [
+        "遠ざける",
+        "とおざける",
+        "遠くする",
+        "とおくする"
+      ],
+      "unit_label": "",
+      "h1": "支点からのきょりが長いほど、小さい力ですむよ。",
+      "h2": "『きょり × 力』が一定。きょりを長くすると力は?",
+      "exp": "力点を支点から遠ざけるほど、小さい力で動かせる。逆に作用点は支点に近づけるほど大きな力がはたらく。『力点は遠く、作用点は近く』とセットで覚える。",
+      "src": "20260718",
+      "errType": "概念混同"
+    },
+    {
+      "id": "R0041",
+      "unit": "物質のとけ方",
+      "kai": 26,
+      "level": "共",
+      "cat": "水よう液",
+      "q": "60℃の水100gに、ミョウバンは57gまでとけます。いま30gをとかしてあります。あと何gとかすことができますか。",
+      "ans": [
+        "27"
+      ],
+      "unit_label": "g",
+      "h1": "『いっぱいまでとける量』から『もうとけている量』を引くよ。",
+      "h2": "57−30",
+      "exp": "57−30=27g。とける量の問題は『上限』と『いまの量』を表に並べて書き、引き算する。この『差を取る』形が一番よく出る。",
+      "src": "20260704",
+      "errType": "書ける誤答"
+    },
+    {
+      "id": "R0042",
+      "unit": "物質のとけ方",
+      "kai": 26,
+      "level": "共",
+      "cat": "水よう液",
+      "q": "水100gにホウ酸は80℃で24g、20℃で5gまでとけます。80℃の水100gにホウ酸を24gとかした水よう液を20℃まで冷やすと、出てくる結晶は何gですか。",
+      "ans": [
+        "19"
+      ],
+      "unit_label": "g",
+      "h1": "冷やすと、とけきれなくなった分が出てくるよ。2つの温度の差を取ろう。",
+      "h2": "24−5",
+      "exp": "24−5=19g。『出てくる結晶』=(高い温度でとけていた量)−(低い温度でとける量)。温度ごとの数を2つ書き出してから引くと間違えない。",
+      "src": "20260704",
+      "errType": "書ける誤答"
+    }
+  ]
+}
+`;
+/*==BANK_R_END==*/
+
+/*==BANK_S_START==*/
+const BANK_S_RAW = `
+{
+  "bankVersion": "S_2026_07_26",
+  "subject": "S",
+  "cats": [
+    {
+      "cat": "工業都市",
+      "icon": "🏭",
+      "desc": "主要工業都市と工業地帯を7/4育成テストまでに"
+    },
+    {
+      "cat": "半島・湖",
+      "icon": "🗾",
+      "desc": "6/27で連続で落とした半島・湖の地名を固める"
+    },
+    {
+      "cat": "農業・水産業",
+      "icon": "🌾",
+      "desc": "促成/抑制・栽培/養殖など混同しやすい用語を退治"
+    },
+    {
+      "cat": "重化学工業・公害",
+      "icon": "⚙️",
+      "desc": "重化学工業の都市・原料と四大公害病。カードは双方向で覚える"
+    }
+  ],
+  "questions": [
+    {
+      "id": "S0001",
+      "unit": "地形(半島・湖)",
+      "kai": 18,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "シジミの漁獲量が日本一で、島根県にある湖は何ですか。",
+      "ans": [
+        "宍道湖",
+        "しんじこ"
+      ],
+      "unit_label": "",
+      "h1": "島根県にある、海水と真水がまじった湖(汽水湖)だよ。",
+      "h2": "『◯◯湖』。読み方は『しんじこ』。",
+      "exp": "宍道湖(しんじこ)は島根県にあり、シジミの漁獲量が日本一。すぐ北にあるのが島根半島。『しんじこ』の読みと漢字をセットで覚えよう。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0002",
+      "unit": "地形(半島・湖)",
+      "kai": 18,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "宍道湖の北がわにある、島根県の半島は何ですか。",
+      "ans": [
+        "島根半島",
+        "しまねはんとう"
+      ],
+      "unit_label": "",
+      "h1": "県名がそのまま半島の名前になっているよ。",
+      "h2": "『◯◯半島』。県名と同じ『島根』が入るよ。",
+      "exp": "島根半島は島根県にあり、宍道湖・中海の北がわに東西にのびる半島。宍道湖とセットで場所を覚えると混同しない。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0003",
+      "unit": "地形(半島・湖)",
+      "kai": 22,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "「なまはげ」で有名で、秋田県にある半島は何ですか。",
+      "ans": [
+        "男鹿半島",
+        "おがはんとう"
+      ],
+      "unit_label": "",
+      "h1": "秋田県の日本海に突き出た半島。読み方が難しいよ。",
+      "h2": "『◯◯半島』。読み方は『おがはんとう』。",
+      "exp": "男鹿半島(おがはんとう)は秋田県にあり、伝統行事『なまはげ』で有名。すぐそばに八郎潟がある。『おが』の読みに注意。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0004",
+      "unit": "地形(半島・湖)",
+      "kai": 22,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "干拓されて大潟村(おおがたむら)になった、秋田県の湖(潟)は何ですか。",
+      "ans": [
+        "八郎潟",
+        "はちろうがた"
+      ],
+      "unit_label": "",
+      "h1": "秋田県にあり、水をぬいて土地(田んぼ)にした場所だよ。",
+      "h2": "『八◯潟』。読み方は『はちろうがた』。",
+      "exp": "八郎潟(はちろうがた)は秋田県にあり、かつて日本で2番目に大きい湖だったが、干拓されて大潟村という農村になった。男鹿半島とセットで覚えよう。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0005",
+      "unit": "地形(半島・湖)",
+      "kai": 20,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "輪島塗(わじまぬり)で有名で、石川県から日本海に突き出た半島は何ですか。",
+      "ans": [
+        "能登半島",
+        "のとはんとう"
+      ],
+      "unit_label": "",
+      "h1": "石川県にある、日本海へ大きく突き出た半島だよ。",
+      "h2": "『◯◯半島』。読み方は『のとはんとう』。",
+      "exp": "能登半島(のとはんとう)は石川県にあり、日本海に突き出ている。輪島塗などの伝統工芸で知られる。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0006",
+      "unit": "地形(半島・湖)",
+      "kai": 21,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "千葉県の大部分をしめ、東京湾の東がわにある半島は何ですか。",
+      "ans": [
+        "房総半島",
+        "ぼうそうはんとう"
+      ],
+      "unit_label": "",
+      "h1": "千葉県のほぼ全体が、この半島だよ。",
+      "h2": "『◯◯半島』。読み方は『ぼうそうはんとう』。",
+      "exp": "房総半島(ぼうそうはんとう)は千葉県にあり、東京湾の東がわにある。西どなり(神奈川側)の三浦半島とセットで東京湾をはさむ位置を覚えよう。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0007",
+      "unit": "地形(半島・湖)",
+      "kai": 21,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "神奈川県にあり、東京湾の西がわ(房総半島の反対がわ)にある半島は何ですか。",
+      "ans": [
+        "三浦半島",
+        "みうらはんとう"
+      ],
+      "unit_label": "",
+      "h1": "神奈川県にある、東京湾をはさんで房総半島と向かい合う半島だよ。",
+      "h2": "『三◯半島』。読み方は『みうらはんとう』。",
+      "exp": "三浦半島(みうらはんとう)は神奈川県にあり、東京湾の西がわ。東がわの房総半島(千葉)と向かい合っている。位置をセットで覚えると混同しない。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0008",
+      "unit": "地形(半島・湖)",
+      "kai": 19,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "三重・奈良・和歌山にまたがる、日本でいちばん大きい半島は何ですか。",
+      "ans": [
+        "紀伊半島",
+        "きいはんとう"
+      ],
+      "unit_label": "",
+      "h1": "近畿地方の南がわにある、日本最大の半島だよ。",
+      "h2": "『◯◯半島』。読み方は『きいはんとう』。",
+      "exp": "紀伊半島(きいはんとう)は三重・奈良・和歌山にまたがる日本最大の半島。雨が多く、林業(吉野すぎなど)がさかん。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0009",
+      "unit": "地形(半島・湖)",
+      "kai": 17,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "鹿児島県の西がわにある半島は何ですか。",
+      "ans": [
+        "薩摩半島",
+        "さつまはんとう"
+      ],
+      "unit_label": "",
+      "h1": "鹿児島県にある半島。旧国名『さつま』がつくよ。",
+      "h2": "『◯◯半島』。読み方は『さつまはんとう』。",
+      "exp": "薩摩半島(さつまはんとう)は鹿児島県の西がわの半島。東がわの大隅(おおすみ)半島との間に鹿児島湾(錦江湾)がある。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0010",
+      "unit": "地形(半島・湖)",
+      "kai": 19,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "滋賀県にある、日本でいちばん大きい湖は何ですか。",
+      "ans": [
+        "琵琶湖",
+        "びわこ"
+      ],
+      "unit_label": "",
+      "h1": "滋賀県の面積の大部分をしめる、日本最大の湖だよ。",
+      "h2": "『◯◯湖』。読み方は『びわこ』。",
+      "exp": "琵琶湖(びわこ)は滋賀県にある日本最大の湖。近畿地方の人々の飲み水をささえ、瀬田川→淀川となって大阪湾へ流れる。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0011",
+      "unit": "地形(半島・湖)",
+      "kai": 20,
+      "level": "基",
+      "cat": "半島・湖",
+      "q": "うなぎの養殖で有名で、静岡県にある湖は何ですか。",
+      "ans": [
+        "浜名湖",
+        "はまなこ"
+      ],
+      "unit_label": "",
+      "h1": "静岡県にある、うなぎの養殖でよく知られた湖だよ。",
+      "h2": "『浜◯湖』。読み方は『はまなこ』。",
+      "exp": "浜名湖(はまなこ)は静岡県にあり、うなぎの養殖で有名。海とつながった汽水湖。近くの浜松市(工業都市)とセットで位置をおさえよう。",
+      "src": "20260627",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0012",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "トヨタの自動車工業で有名な、愛知県の都市はどこですか。",
+      "ans": [
+        "豊田市",
+        "とよたし",
+        "豊田",
+        "とよた"
+      ],
+      "unit_label": "",
+      "h1": "自動車会社の名前が、そのまま市の名前になっているよ。",
+      "h2": "『◯◯市』。自動車で有名な『とよた』。",
+      "exp": "豊田市(愛知県)は自動車工業の中心地で、中京工業地帯にある。中京工業地帯は自動車を中心に、製造品出荷額が日本一。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0013",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "楽器やオートバイの生産で有名な、静岡県の都市はどこですか。",
+      "ans": [
+        "浜松市",
+        "はままつし",
+        "浜松",
+        "はままつ"
+      ],
+      "unit_label": "",
+      "h1": "静岡県にある、ピアノやオートバイをつくる都市だよ。",
+      "h2": "『浜◯市』。読み方は『はままつし』。",
+      "exp": "浜松市(静岡県)は楽器(ピアノ)やオートバイの生産で有名で、東海工業地域にある。近くの浜名湖(半島・湖)とセットで場所を覚えよう。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0014",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "京浜工業地帯にあり、鉄鋼や石油化学がさかんな神奈川県の都市はどこですか。",
+      "ans": [
+        "川崎市",
+        "かわさきし",
+        "川崎",
+        "かわさき"
+      ],
+      "unit_label": "",
+      "h1": "神奈川県にあり、東京湾ぞいで鉄鋼・石油化学がさかんな都市だよ。",
+      "h2": "『◯◯市』。読み方は『かわさきし』。",
+      "exp": "川崎市(神奈川県)は京浜工業地帯にあり、鉄鋼・石油化学がさかん。京浜工業地帯は東京・神奈川に広がる。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0015",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "京葉工業地域にあり、石油化学コンビナートで有名な千葉県の都市はどこですか。",
+      "ans": [
+        "市原市",
+        "いちはらし",
+        "市原",
+        "いちはら"
+      ],
+      "unit_label": "",
+      "h1": "千葉県の東京湾ぞいにある、石油化学がさかんな都市だよ。",
+      "h2": "『市◯市』。読み方は『いちはらし』。",
+      "exp": "市原市(千葉県)は京葉工業地域の石油化学コンビナートで有名。同じ京葉工業地域の君津市(製鉄)とセットで覚えよう。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0016",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "京葉工業地域にあり、大きな製鉄所がある千葉県の都市はどこですか。",
+      "ans": [
+        "君津市",
+        "きみつし",
+        "君津",
+        "きみつ"
+      ],
+      "unit_label": "",
+      "h1": "千葉県にある、鉄をつくる製鉄所で知られる都市だよ。",
+      "h2": "『◯◯市』。読み方は『きみつし』。",
+      "exp": "君津市(千葉県)は京葉工業地域にあり、大きな製鉄所がある(鉄鋼業)。石油化学の市原市とセットで、京葉=鉄鋼+石油化学と覚えよう。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0017",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "北関東工業地域にあり、自動車(SUBARU)の生産で知られる群馬県の都市はどこですか。",
+      "ans": [
+        "太田市",
+        "おおたし",
+        "太田",
+        "おおた"
+      ],
+      "unit_label": "",
+      "h1": "群馬県にある、自動車をつくる都市だよ。",
+      "h2": "『太◯市』。読み方は『おおたし』。",
+      "exp": "太田市(群馬県)は北関東工業地域にあり、自動車工業で知られる。内陸(海に面していない)にある工業都市の代表例。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0018",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "共",
+      "cat": "工業都市",
+      "q": "鹿島臨海工業地域にあり、鉄鋼・石油化学がさかんな茨城県の都市はどこですか。",
+      "ans": [
+        "鹿嶋市",
+        "かしまし",
+        "鹿嶋",
+        "かしま"
+      ],
+      "unit_label": "",
+      "h1": "茨城県にある、掘り込み港をつくって発展した工業都市だよ。",
+      "h2": "『鹿◯市』。読み方は『かしまし』(工業地域名は『鹿島臨海』)。",
+      "exp": "鹿嶋市(茨城県)は鹿島臨海工業地域にあり、鉄鋼・石油化学がさかん。注意:市の名前は『鹿嶋市』(嶋)、工業地域の名前は『鹿島臨海』(島)と漢字がちがう。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0019",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "共",
+      "cat": "工業都市",
+      "q": "自動車工業を中心に、製造品出荷額が日本一の工業地帯はどこですか。",
+      "ans": [
+        "中京工業地帯",
+        "ちゅうきょうこうぎょうちたい",
+        "中京",
+        "ちゅうきょう"
+      ],
+      "unit_label": "",
+      "h1": "愛知県を中心とした、生産額日本一の工業地帯だよ。",
+      "h2": "『◯◯工業地帯』。豊田市がある地帯。読み方は『ちゅうきょう』。",
+      "exp": "中京工業地帯は愛知・三重を中心に広がり、豊田市の自動車工業などで製造品出荷額が日本一。4大工業地帯(京浜・中京・阪神・北九州)の中でも最大。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0020",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "東京都と神奈川県に広がる工業地帯を何といいますか。",
+      "ans": [
+        "京浜工業地帯",
+        "けいひんこうぎょうちたい",
+        "京浜",
+        "けいひん"
+      ],
+      "unit_label": "",
+      "h1": "『東京』の京と、横『浜』の浜をあわせた名前だよ。",
+      "h2": "『◯◯工業地帯』。読み方は『けいひん』。",
+      "exp": "京浜工業地帯は東京・神奈川に広がる。かつては生産額1位だったが、今は中京・阪神に次ぐ。川崎市が代表的な工業都市。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0021",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "基",
+      "cat": "工業都市",
+      "q": "大阪府と兵庫県に広がる工業地帯を何といいますか。",
+      "ans": [
+        "阪神工業地帯",
+        "はんしんこうぎょうちたい",
+        "阪神",
+        "はんしん"
+      ],
+      "unit_label": "",
+      "h1": "大『阪』と神戸(『神』)をあわせた名前だよ。",
+      "h2": "『◯◯工業地帯』。読み方は『はんしん』。",
+      "exp": "阪神工業地帯は大阪・兵庫に広がる。中小工場が多く、金属工業などがさかん。中京・京浜と並ぶ4大工業地帯の一つ。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0022",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "共",
+      "cat": "工業都市",
+      "q": "八幡製鉄所を起点に発展した、福岡県にある工業地帯(地域)を何といいますか。",
+      "ans": [
+        "北九州工業地帯",
+        "きたきゅうしゅうこうぎょうちたい",
+        "北九州工業地域",
+        "きたきゅうしゅうこうぎょうちいき",
+        "北九州",
+        "きたきゅうしゅう"
+      ],
+      "unit_label": "",
+      "h1": "福岡県北部にある、昔は鉄づくりで栄えた工業地帯だよ。",
+      "h2": "『◯◯◯工業地帯』。地方名と同じ『北九州』。",
+      "exp": "北九州工業地帯は福岡県にあり、八幡製鉄所を起点に発展した。今は地位が下がり『工業地域』とよばれることも多い。4大工業地帯の一つ。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0023",
+      "unit": "工業のさかんな地域",
+      "kai": 27,
+      "level": "共",
+      "cat": "工業都市",
+      "q": "関東地方から北九州にかけて、太平洋や瀬戸内海ぞいに工業地帯が帯のようにつらなる地域を何といいますか。",
+      "ans": [
+        "太平洋ベルト",
+        "たいへいようべると"
+      ],
+      "unit_label": "",
+      "h1": "工業地帯が『帯(ベルト)』のようにつながっている地域だよ。",
+      "h2": "『太平洋◯◯◯』。海の名前+『ベルト』。",
+      "exp": "太平洋ベルトは関東から北九州まで、太平洋・瀬戸内海ぞいに工業地帯・地域が帯状につらなる地域。人口も工業も集中している。",
+      "src": "20260523",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0024",
+      "unit": "日本の農業",
+      "kai": 24,
+      "level": "共",
+      "cat": "農業・水産業",
+      "q": "あたたかい気候やビニールハウスを使い、出荷時期を早める栽培方法を何といいますか。",
+      "ans": [
+        "促成栽培",
+        "そくせいさいばい"
+      ],
+      "unit_label": "",
+      "h1": "『早づくり』のこと。高知平野・宮崎平野が有名だよ。",
+      "h2": "『◯成栽培』。◯には『促(うながす)』が入るよ。",
+      "exp": "促成栽培は出荷を早める『早づくり』。高知平野・宮崎平野のなす・ピーマンなどが有名。反対の『抑制栽培(遅づくり)』と混同しないよう、『促=早める』とセットで覚えよう。",
+      "src": "20260620",
+      "errType": "用語混同"
+    },
+    {
+      "id": "S0025",
+      "unit": "日本の農業",
+      "kai": 24,
+      "level": "共",
+      "cat": "農業・水産業",
+      "q": "すずしい高原の気候を使い、出荷時期を遅らせる栽培方法を何といいますか。",
+      "ans": [
+        "抑制栽培",
+        "よくせいさいばい"
+      ],
+      "unit_label": "",
+      "h1": "『遅づくり』のこと。群馬県嬬恋村(つまごいむら)のキャベツが有名だよ。",
+      "h2": "『◯制栽培』。◯には『抑(おさえる)』が入るよ。",
+      "exp": "抑制栽培は出荷を遅らせる『遅づくり』。群馬県嬬恋村の高原キャベツ、長野県のレタスなどが有名。『促成(早める)』の反対と整理して覚えよう。",
+      "src": "20260620",
+      "errType": "用語混同"
+    },
+    {
+      "id": "S0026",
+      "unit": "日本の農業",
+      "kai": 24,
+      "level": "基",
+      "cat": "農業・水産業",
+      "q": "大都市の近くで、新鮮な野菜などをつくって出荷する農業を何といいますか。",
+      "ans": [
+        "近郊農業",
+        "きんこうのうぎょう"
+      ],
+      "unit_label": "",
+      "h1": "大都市の『近く』でおこなう農業だよ。",
+      "h2": "『◯◯農業』。◯◯は『近郊(=近く)』。",
+      "exp": "近郊農業は大都市の近くでおこなう農業。輸送費が安く、新鮮なうちに届けられるのが強み。千葉・茨城・埼玉などがさかん。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0027",
+      "unit": "日本の水産業",
+      "kai": 25,
+      "level": "共",
+      "cat": "農業・水産業",
+      "q": "暖流と寒流がぶつかり、魚が多く集まる好漁場になる場所を何といいますか。",
+      "ans": [
+        "潮目",
+        "しおめ",
+        "潮境",
+        "しおざかい"
+      ],
+      "unit_label": "",
+      "h1": "あたたかい海流と冷たい海流がぶつかる境目だよ。三陸沖が有名。",
+      "h2": "『潮◯』。読み方は『しおめ』(『潮境=しおざかい』でも正解)。",
+      "exp": "潮目(潮境)は暖流(黒潮)と寒流(親潮)がぶつかる場所。プランクトンが豊富で魚が集まる好漁場になる。三陸沖が代表例。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0028",
+      "unit": "日本の水産業",
+      "kai": 25,
+      "level": "基",
+      "cat": "農業・水産業",
+      "q": "水深およそ200mまでの、かたむきがゆるやかな海底を何といいますか。",
+      "ans": [
+        "大陸棚",
+        "たいりくだな"
+      ],
+      "unit_label": "",
+      "h1": "陸地からゆるやかに続く、浅い海底のことだよ。魚がよく集まる。",
+      "h2": "『大陸◯』。◯には『棚(たな)』が入るよ。",
+      "exp": "大陸棚は水深約200mまでの浅くゆるやかな海底。日光がとどきプランクトンが多いため好漁場になる。読み方『たいりくだな』に注意。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0029",
+      "unit": "日本の水産業",
+      "kai": 25,
+      "level": "共",
+      "cat": "農業・水産業",
+      "q": "たまごからかえした稚魚(ちぎょ)を川や海に放流し、大きく育ってからとる漁業を何といいますか。",
+      "ans": [
+        "栽培漁業",
+        "さいばいぎょぎょう"
+      ],
+      "unit_label": "",
+      "h1": "いちど自然に『放して』から、育ったものをとる方法だよ。",
+      "h2": "『◯◯漁業』。◯◯は『栽培』。",
+      "exp": "栽培漁業は稚魚まで育てて放流し、自然の中で育ってからとる漁業。ずっといけすで育てる『養殖業』とは別物。『放流するのが栽培』と区別して覚えよう。",
+      "src": "20260620",
+      "errType": "用語混同"
+    },
+    {
+      "id": "S0030",
+      "unit": "日本の水産業",
+      "kai": 25,
+      "level": "基",
+      "cat": "農業・水産業",
+      "q": "いけすなどで、魚や貝を出荷する大きさまで育てる漁業を何といいますか。",
+      "ans": [
+        "養殖業",
+        "ようしょくぎょう",
+        "養殖漁業",
+        "ようしょくぎょぎょう"
+      ],
+      "unit_label": "",
+      "h1": "放流せず、ずっと『育てて』から出荷する方法だよ。",
+      "h2": "『養◯業』。◯には『殖』が入るよ。",
+      "exp": "養殖業はいけすなどで出荷サイズまで育てる漁業。放流する『栽培漁業』とちがい、最後まで人が育てる。『育てきるのが養殖』と区別しよう。",
+      "src": "20260620",
+      "errType": "用語混同"
+    },
+    {
+      "id": "S0031",
+      "unit": "日本の水産業",
+      "kai": 25,
+      "level": "基",
+      "cat": "農業・水産業",
+      "q": "排他的経済水域(はいたてきけいざいすいいき)は、海岸から沖へおよそ何海里までですか。",
+      "ans": [
+        "200"
+      ],
+      "unit_label": "海里",
+      "h1": "『領海(12海里)』より、ずっと外がわまで広がるよ。",
+      "h2": "『◯◯◯海里』。3けたの数字だよ。",
+      "exp": "排他的経済水域は海岸(領海の外側)からおよそ200海里(約370km)まで。この中の水産資源や鉱産資源は、その国が管理できる。",
+      "src": "20260620",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0032",
+      "unit": "日本の重化学工業",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "千葉県で大きな製鉄所があるのは、県庁所在地の千葉市ではなく、どの都市ですか。",
+      "ans": [
+        "君津市",
+        "きみつし",
+        "君津",
+        "きみつ"
+      ],
+      "unit_label": "",
+      "h1": "京葉工業地域にある、鉄をつくる都市だよ。県庁所在地ではないよ。",
+      "h2": "『◯◯市』。読み方は『きみつし』。",
+      "exp": "千葉県の製鉄は君津市。工業都市を聞かれたときに県庁所在地(千葉市)を書いてしまうミスに注意。『県名 → 工業都市名』の向きでも言えるようにしておこう。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0033",
+      "unit": "日本の重化学工業",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "岡山県にあり、水島地区の製鉄所や石油化学コンビナートで有名な都市はどこですか。",
+      "ans": [
+        "倉敷市",
+        "くらしきし",
+        "倉敷",
+        "くらしき"
+      ],
+      "unit_label": "",
+      "h1": "瀬戸内工業地域にある都市。県庁所在地の岡山市ではないよ。",
+      "h2": "『◯◯市』。読み方は『くらしきし』。",
+      "exp": "岡山県の工業都市は倉敷市(水島地区)。県庁所在地の岡山市と混同しやすい。『岡山県=倉敷市』『千葉県=君津市』のように、県と工業都市をセットで覚える。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0034",
+      "unit": "日本の軽工業",
+      "kai": 27,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "静岡県にあり、製紙・パルプ工業で日本有数の都市はどこですか。",
+      "ans": [
+        "富士市",
+        "ふじし",
+        "富士",
+        "ふじ"
+      ],
+      "unit_label": "",
+      "h1": "静岡県の、富士山のふもとにある都市だよ。",
+      "h2": "『◯◯市』。山の名前と同じ『ふじ』。",
+      "exp": "富士市(静岡県)は製紙・パルプ工業がさかん。豊富な水を使う産業なので、水に恵まれた土地に立地する。同じ静岡県の浜松市(楽器・オートバイ)と区別しよう。",
+      "src": "20260704",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0035",
+      "unit": "日本の重化学工業",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "三重県にあり、石油化学コンビナートと公害のぜんそくで知られる都市はどこですか。",
+      "ans": [
+        "四日市市",
+        "よっかいちし",
+        "四日市",
+        "よっかいち"
+      ],
+      "unit_label": "",
+      "h1": "中京工業地帯にある、石油化学の都市だよ。公害病の名前にもなっている。",
+      "h2": "『◯◯◯市』。読み方は『よっかいちし』。",
+      "exp": "四日市市(三重県)は石油化学コンビナートで有名。大気汚染による四日市ぜんそくが起きた場所でもある。工業都市と公害をセットで覚えると両方問われても答えられる。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0036",
+      "unit": "日本の重化学工業",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "製鉄所で鉄鉱石をとかすときに使う、石炭からつくられる燃料を何といいますか。",
+      "ans": [
+        "コークス",
+        "こーくす"
+      ],
+      "unit_label": "",
+      "h1": "石炭を蒸し焼きにしてつくる燃料だよ。",
+      "h2": "カタカナ4文字。『コー◯ス』。",
+      "exp": "製鉄には鉄鉱石・コークス(石炭からつくる)・石灰石の3つが必要。この3点セットで覚えよう。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0037",
+      "unit": "日本の重化学工業",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "石油からつくられ、プラスチックなどの原料になるものを何といいますか。",
+      "ans": [
+        "ナフサ",
+        "なふさ"
+      ],
+      "unit_label": "",
+      "h1": "石油化学コンビナートで最初につくられる原料だよ。",
+      "h2": "カタカナ3文字。『ナ◯サ』。",
+      "exp": "ナフサは原油からつくられ、プラスチック・合成せんい・合成ゴムなどの原料になる。石油化学=ナフサ、製鉄=コークス、と対にして覚える。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0038",
+      "unit": "工業のさかんな地域",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "中国地方の南がわと四国地方の北がわ、瀬戸内海ぞいに広がる工業地域を何といいますか。",
+      "ans": [
+        "瀬戸内工業地域",
+        "せとうちこうぎょうちいき",
+        "瀬戸内",
+        "せとうち"
+      ],
+      "unit_label": "",
+      "h1": "海の名前がそのまま地域名になっているよ。",
+      "h2": "『◯◯◯工業地域』。倉敷市がある地域。",
+      "exp": "瀬戸内工業地域は瀬戸内海ぞいに広がり、倉敷市(水島)などの石油化学・製鉄がさかん。塩田や軍用地のあとに工場がつくられた。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0039",
+      "unit": "工業のさかんな地域",
+      "kai": 28,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "静岡県を中心に、太平洋ぞいに広がる工業地域を何といいますか。",
+      "ans": [
+        "東海工業地域",
+        "とうかいこうぎょうちいき",
+        "東海",
+        "とうかい"
+      ],
+      "unit_label": "",
+      "h1": "静岡県の浜松市・富士市がある地域だよ。",
+      "h2": "『◯◯工業地域』。読み方は『とうかい』。",
+      "exp": "東海工業地域は静岡県を中心に広がり、浜松市(楽器・オートバイ)・富士市(製紙)がある。中京工業地帯(愛知)とは別物なので区別する。",
+      "src": "20260718",
+      "errType": "用語混同"
+    },
+    {
+      "id": "S0040",
+      "unit": "工業生産をめぐる問題点",
+      "kai": 29,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "熊本県の水俣病、富山県のイタイイタイ病、三重県の四日市ぜんそくとあわせて四大公害病とよばれる、新潟県で起きた公害病は何ですか。",
+      "ans": [
+        "新潟水俣病",
+        "にいがたみなまたびょう",
+        "第二水俣病",
+        "だいにみなまたびょう"
+      ],
+      "unit_label": "",
+      "h1": "熊本の水俣病と同じ原因の物質で、阿賀野川の流域で起きたよ。",
+      "h2": "『◯◯水俣病』。県名が頭につくよ。",
+      "exp": "四大公害病は、水俣病(熊本・有機水銀)、新潟水俣病(新潟・有機水銀)、イタイイタイ病(富山・カドミウム)、四日市ぜんそく(三重・大気汚染)。4つセットで言えるようにしておく。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0041",
+      "unit": "工業生産をめぐる問題点",
+      "kai": 29,
+      "level": "共",
+      "cat": "重化学工業・公害",
+      "q": "富山県の神通川流域で起きたイタイイタイ病の原因となった物質は何ですか。",
+      "ans": [
+        "カドミウム",
+        "かどみうむ"
+      ],
+      "unit_label": "",
+      "h1": "鉱山から流れ出た金属だよ。骨がもろくなる病気を起こした。",
+      "h2": "カタカナ5文字。『カド◯ウム』。",
+      "exp": "イタイイタイ病の原因はカドミウム(富山県・神通川)。水俣病と新潟水俣病の原因は有機水銀。原因物質と県名をセットで覚える。",
+      "src": "20260718",
+      "errType": "用語混同"
+    },
+    {
+      "id": "S0042",
+      "unit": "工業生産をめぐる問題点",
+      "kai": 29,
+      "level": "基",
+      "cat": "重化学工業・公害",
+      "q": "1950年代後半から1970年代のはじめにかけて、日本の経済が急速に成長した時期を何といいますか。",
+      "ans": [
+        "高度経済成長期",
+        "こうどけいざいせいちょうき",
+        "高度経済成長",
+        "こうどけいざいせいちょう"
+      ],
+      "unit_label": "",
+      "h1": "工業が急に発展し、同時に公害も広がった時期だよ。",
+      "h2": "『高度◯◯◯◯期』。『経済成長』が入るよ。",
+      "exp": "高度経済成長期(1950年代後半〜1973年ごろ)に日本の工業は急成長したが、同時に四大公害病などの公害が深刻化した。1973年の石油危機で終わる。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    },
+    {
+      "id": "S0043",
+      "unit": "工業生産をめぐる問題点",
+      "kai": 29,
+      "level": "共",
+      "cat": "重化学工業・公害",
+      "q": "工場が海外に移り、国内の工業生産や雇用がおとろえていくことを何といいますか。",
+      "ans": [
+        "産業の空洞化",
+        "さんぎょうのくうどうか",
+        "空洞化",
+        "くうどうか"
+      ],
+      "unit_label": "",
+      "h1": "国内が『からっぽ』になっていくイメージの言葉だよ。",
+      "h2": "『産業の◯◯化』。◯◯は『空洞(くうどう)』。",
+      "exp": "産業の空洞化は、人件費の安い海外へ工場が移ることで国内の工業がおとろえる現象。漢字の『空洞』が書けるかもポイント。",
+      "src": "20260718",
+      "errType": "取りこぼし"
+    }
+  ]
+}
+`;
+/*==BANK_S_END==*/
+
+/*==BANK_K_START==*/
+const BANK_K_RAW = `
+{"bankVersion":"K_2026_07_26","subject":"K","cats":[],"questions":[]}
+`;
+/*==BANK_K_END==*/
+
+/*==BANK_Y_START==*/
+const BANK_Y_RAW = `
+{
+  "bankVersion": "Y_20260728",
+  "subject": "Y",
+  "testDate": "2026-07-28",
+  "_note": "夏期特別テスト①(2026-07-28)の4科統合バンク。回1〜6。中間ファイル(_M/_K/_S/_R)を統合しidを全体で振り直したもの。サイクル使い捨て・ローカル保管。",
+  "cats": [
+    {
+      "cat": "算数",
+      "icon": "🔢",
+      "desc": "数の性質・小数と分数の計算(回1〜6)"
+    },
+    {
+      "cat": "国語",
+      "icon": "📖",
+      "desc": "主語述語・指示語・接続語・対義語ほか(回1〜6)"
+    },
+    {
+      "cat": "社会",
+      "icon": "🗾",
+      "desc": "九州・中国四国・近畿の自然と産業(回1〜6)"
+    },
+    {
+      "cat": "理科",
+      "icon": "🌱",
+      "desc": "生物の総ざらい 種子〜生物のつながり(回1〜6)"
+    }
+  ],
+  "questions": [
+    {
+      "id": "Y0001",
+      "unit": "小数のかけ算",
+      "kai": 1,
+      "level": "基",
+      "cat": "算数",
+      "q": "2.4 × 1.5 を計算しましょう。",
+      "ans": [
+        "3.6"
+      ],
+      "unit_label": "",
+      "h1": "整数のときと同じように、まず 24 × 15 を筆算で計算しよう。小数点はあとで考えるよ。",
+      "h2": "24 × 15 = 360。小数点は上の2つの数で1けた+1けた=2けた分、左にずらすよ。",
+      "exp": "24 × 15 = 360 を計算し、小数点を2けた左にずらして 3.60 = 3.6。かけ算は右はしをそろえて筆算するのがコツ。",
+      "src": "natsu2026_M_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0002",
+      "unit": "小数のわり算",
+      "kai": 1,
+      "level": "基",
+      "cat": "算数",
+      "q": "1.8 ÷ 0.4 を、わり切れるまで計算しましょう。",
+      "ans": [
+        "4.5"
+      ],
+      "unit_label": "",
+      "h1": "わる数 0.4 を整数にしたい。わられる数とわる数を両方10倍して 18 ÷ 4 にしよう。",
+      "h2": "18 ÷ 4 をわり切れるまで計算。4あまり2 → 0をおろして…4.5になるよ。",
+      "exp": "0.4を整数にするため両方10倍して 18 ÷ 4 = 4.5。両方を同じ数でかけても商は変わらない。",
+      "src": "natsu2026_M_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0003",
+      "unit": "小数の逆算",
+      "kai": 1,
+      "level": "共",
+      "cat": "算数",
+      "q": "□ × 4.2 = 10.5 のとき、□ にあてはまる数を求めましょう。",
+      "ans": [
+        "2.5"
+      ],
+      "unit_label": "",
+      "h1": "かけ算の逆算はわり算。□ = 10.5 ÷ 4.2 で求められるよ。",
+      "h2": "10.5 ÷ 4.2 → 両方10倍して 105 ÷ 42 = 2.5。",
+      "exp": "かけ算の逆算はわり算だから □ = 10.5 ÷ 4.2 = 2.5。たしかめ算 2.5 × 4.2 = 10.5 でも確認できる。",
+      "src": "natsu2026_M_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0004",
+      "unit": "約数",
+      "kai": 2,
+      "level": "基",
+      "cat": "算数",
+      "q": "24 の約数は全部で何個ありますか。",
+      "ans": [
+        "8"
+      ],
+      "unit_label": "個",
+      "h1": "1×24、2×12、3×8、4×6 のように「かけて24になるペア」で探すと、数え落とさないよ。",
+      "h2": "1, 2, 3, 4, 6, 8, 12, 24 …ぜんぶ数えてみよう。",
+      "exp": "24の約数は 1, 2, 3, 4, 6, 8, 12, 24 の8個。ペアで見つけると落とさない。",
+      "src": "natsu2026_M_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0005",
+      "unit": "最大公約数",
+      "kai": 2,
+      "level": "共",
+      "cat": "算数",
+      "q": "36 と 48 の最大公約数を求めましょう。",
+      "ans": [
+        "12"
+      ],
+      "unit_label": "",
+      "h1": "すだれ算(連除法)で、両方をわり切れる数で次々にわっていこう。",
+      "h2": "36,48 →(÷2) 18,24 →(÷2) 9,12 →(÷3) 3,4。わった数 2×2×3 をかけると?",
+      "exp": "すだれ算で 2×2×3 = 12。これ以上両方をわれる数がなくなったら、わった数の積が最大公約数。",
+      "src": "natsu2026_M_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0006",
+      "unit": "倍数の見分け方",
+      "kai": 3,
+      "level": "基",
+      "cat": "算数",
+      "q": "2538 が3の倍数かどうかを調べます。各位の数字の和はいくつですか。",
+      "ans": [
+        "18"
+      ],
+      "unit_label": "",
+      "h1": "3の倍数は「各位の数字の和が3の倍数」。すべての位の数をたそう。",
+      "h2": "2 + 5 + 3 + 8 を計算してみよう。",
+      "exp": "各位の和は 2+5+3+8 = 18。18は3の倍数なので、2538も3の倍数。これが3の倍数の見分け方。",
+      "src": "natsu2026_M_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0007",
+      "unit": "最小公倍数",
+      "kai": 3,
+      "level": "基",
+      "cat": "算数",
+      "q": "8 と 12 の最小公倍数を求めましょう。",
+      "ans": [
+        "24"
+      ],
+      "unit_label": "",
+      "h1": "8の倍数を並べて、12の倍数と最初に一致する数をさがそう。",
+      "h2": "8, 16, 24, 32… と 12, 24, 36… 共通で一番小さいのは?",
+      "exp": "8の倍数と12の倍数で共通の最小は24。すだれ算なら 8,12 →(÷2)4,6 →(÷2)2,3、2×2×2×3 = 24。",
+      "src": "natsu2026_M_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0008",
+      "unit": "分数のたし算",
+      "kai": 4,
+      "level": "基",
+      "cat": "算数",
+      "q": "1/3 + 5/12 を計算しましょう。答えは既約分数で書きましょう。",
+      "ans": [
+        "3/4"
+      ],
+      "unit_label": "",
+      "h1": "分母を3と12の最小公倍数12にそろえよう(通分)。",
+      "h2": "1/3 = 4/12。4/12 + 5/12 = 9/12。まだ約分できるよ。",
+      "exp": "通分して 4/12 + 5/12 = 9/12。9/12は3で約分して 3/4。答えは必ず既約分数で。",
+      "src": "natsu2026_M_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0009",
+      "unit": "小数と分数",
+      "kai": 4,
+      "level": "基",
+      "cat": "算数",
+      "q": "0.75 を分数で表しましょう。約分して既約分数で書きましょう。",
+      "ans": [
+        "3/4"
+      ],
+      "unit_label": "",
+      "h1": "0.75 = 75/100。ここから約分しよう。",
+      "h2": "75/100 を 25 で約分すると?",
+      "exp": "0.75 = 75/100 = 3/4(25で約分)。1/4=0.25、3/4=0.75 は覚えておくと速い。",
+      "src": "natsu2026_M_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0010",
+      "unit": "帯分数のひき算",
+      "kai": 4,
+      "level": "共",
+      "cat": "算数",
+      "q": "2と1/6 − 1と2/3 を計算しましょう。答えは既約分数で書きましょう。",
+      "ans": [
+        "1/2"
+      ],
+      "unit_label": "",
+      "h1": "帯分数を仮分数に直すと計算しやすいよ。分母を6にそろえよう。",
+      "h2": "13/6 − 10/6 = 3/6。まだ約分できる?",
+      "exp": "仮分数にして 13/6 − 10/6 = 3/6 = 1/2。1/6は2/3(=4/6)より小さいので、整数からかりてくる形。",
+      "src": "natsu2026_M_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0011",
+      "unit": "分数のかけ算",
+      "kai": 5,
+      "level": "基",
+      "cat": "算数",
+      "q": "2/3 × 4/5 を計算しましょう。答えは既約分数で書きましょう。",
+      "ans": [
+        "8/15"
+      ],
+      "unit_label": "",
+      "h1": "分母どうし、分子どうしをかけよう。",
+      "h2": "(2×4)/(3×5) = 8/15。これは約分できる?",
+      "exp": "分子 2×4=8、分母 3×5=15 で 8/15。これ以上約分できないのでこのまま。",
+      "src": "natsu2026_M_kai5",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0012",
+      "unit": "帯分数のかけ算",
+      "kai": 5,
+      "level": "共",
+      "cat": "算数",
+      "q": "2と1/4 × 3/5 を計算しましょう。答えは仮分数(既約)で書きましょう。",
+      "ans": [
+        "27/20"
+      ],
+      "unit_label": "",
+      "h1": "帯分数 2と1/4 を仮分数 9/4 に直してからかけよう。",
+      "h2": "9/4 × 3/5 = (9×3)/(4×5) = 27/20。",
+      "exp": "2と1/4 = 9/4。9/4 × 3/5 = 27/20。ノートでは 1と7/20 と書けると◎(アプリでは仮分数 27/20 で入力)。",
+      "src": "natsu2026_M_kai5",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0013",
+      "unit": "分数と小数の混合",
+      "kai": 6,
+      "level": "基",
+      "cat": "算数",
+      "q": "3/8 × 0.4 を計算しましょう。答えは既約分数で書きましょう。",
+      "ans": [
+        "3/20"
+      ],
+      "unit_label": "",
+      "h1": "小数0.4を分数2/5に直してからかけよう。分数と小数がまざったら分数にそろえるのが基本。",
+      "h2": "3/8 × 2/5 = (3×2)/(8×5) = 6/40。約分すると?",
+      "exp": "0.4 = 2/5。3/8 × 2/5 = 6/40 = 3/20(2で約分)。分数と小数の混合は分数にそろえると正確。",
+      "src": "natsu2026_M_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0014",
+      "unit": "四則混合の計算順序",
+      "kai": 6,
+      "level": "共",
+      "cat": "算数",
+      "q": "1/4 + (3/4 − 1/2) × 2 を計算しましょう。答えは既約分数で書きましょう。",
+      "ans": [
+        "3/4"
+      ],
+      "unit_label": "",
+      "h1": "計算の順番は「かっこの中 → かけ算 → たし算」。まずかっこの中から。",
+      "h2": "(3/4 − 1/2) = 1/4。1/4 × 2 = 1/2。あとは 1/4 + 1/2。",
+      "exp": "かっこ内 3/4−1/2 = 1/4、×2 = 1/2、1/4 + 1/2 = 3/4。順番をまちがえないことが最大のポイント。",
+      "src": "natsu2026_M_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0015",
+      "unit": "分数の逆算",
+      "kai": 6,
+      "level": "共",
+      "cat": "算数",
+      "q": "□ × 2/3 = 4/9 のとき、□ にあてはまる数を求めましょう。答えは既約分数で書きましょう。",
+      "ans": [
+        "2/3"
+      ],
+      "unit_label": "",
+      "h1": "かけ算の逆算はわり算。□ = 4/9 ÷ 2/3。わり算は「わる数の逆数をかける」。",
+      "h2": "4/9 ÷ 2/3 = 4/9 × 3/2 = 12/18。約分すると?",
+      "exp": "□ = 4/9 ÷ 2/3 = 4/9 × 3/2 = 12/18 = 2/3。わり算はわる数をひっくり返してかける。",
+      "src": "natsu2026_M_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0016",
+      "unit": "逆算の手順",
+      "kai": 6,
+      "level": "基",
+      "cat": "算数",
+      "q": "(□ + 8) × 2 = 28 のとき、□ にあてはまる数を求めましょう。",
+      "ans": [
+        "6"
+      ],
+      "unit_label": "",
+      "h1": "外側からじゅんばんにほどこう。まず「×2」の逆算(÷2)から。",
+      "h2": "(□ + 8) = 28 ÷ 2 = 14。つぎに □ = 14 − 8。",
+      "exp": "かけ算の逆算はわり算で □+8 = 28÷2 = 14。たし算の逆算はひき算で □ = 14−8 = 6。外側から順にほどくのがコツ。",
+      "src": "natsu2026_M_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0017",
+      "unit": "主語・述語",
+      "kai": 1,
+      "level": "基",
+      "cat": "国語",
+      "q": "次の文の主語を書きぬきましょう。「公園で 妹が 元気に 遊ぶ。」",
+      "ans": [
+        "妹が",
+        "妹",
+        "いもうとが",
+        "いもうと"
+      ],
+      "unit_label": "",
+      "h1": "「だれが・何が」にあたることばが主語だよ。",
+      "h2": "「〜が」の形をさがそう。だれが遊ぶ?",
+      "exp": "主語は「だれが・何が」にあたることば。この文では「妹が」。述語(どうする)は「遊ぶ」。主語と述語はセットでさがす。",
+      "src": "natsu2026_K_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0018",
+      "unit": "主語・述語",
+      "kai": 1,
+      "level": "基",
+      "cat": "国語",
+      "q": "次の文の述語を書きぬきましょう。「昨日の 遠足は とても 楽しかった。」",
+      "ans": [
+        "楽しかった",
+        "たのしかった"
+      ],
+      "unit_label": "",
+      "h1": "「どうする・どんなだ・なんだ」にあたることばが述語。ふつう文の最後にあるよ。",
+      "h2": "遠足は → どうだった? 文の終わりのことば。",
+      "exp": "述語は「どうする・どんなだ・なんだ」にあたることばで、ふつう文末にくる。この文では「楽しかった」。",
+      "src": "natsu2026_K_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0019",
+      "unit": "指示語",
+      "kai": 2,
+      "level": "共",
+      "cat": "国語",
+      "q": "次の「それ」が指す言葉を書きぬきましょう。「机の上に本がある。それを取ってください。」",
+      "ans": [
+        "本",
+        "ほん"
+      ],
+      "unit_label": "",
+      "h1": "「それ」は前に出てきたことばを指すよ。何を取るのかな?",
+      "h2": "「それ」の前を見よう。取るものは何?",
+      "exp": "指示語(こそあど言葉)は前に出た言葉を指す。「それ」が指すのは「本」。指示語が出たら前をさがすのが基本。",
+      "src": "natsu2026_K_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0020",
+      "unit": "修飾語",
+      "kai": 2,
+      "level": "共",
+      "cat": "国語",
+      "q": "次の文で「赤い」がくわしく説明していることばを書きぬきましょう。「赤い 花が さいた。」",
+      "ans": [
+        "花",
+        "はな",
+        "花が",
+        "はなが"
+      ],
+      "unit_label": "",
+      "h1": "「赤い」はどのことばをくわしくしている? 「赤い○○」の○○。",
+      "h2": "「赤い」→ 何がさいた?",
+      "exp": "修飾語は他のことばをくわしく説明することば。「赤い」は「花」をくわしくしている(どんな花か=赤い花)。",
+      "src": "natsu2026_K_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0021",
+      "unit": "接続語",
+      "kai": 3,
+      "level": "基",
+      "cat": "国語",
+      "q": "次の( )に入る接続語をひらがなで書きましょう。「たくさん練習した。( )、試合に負けた。」",
+      "ans": [
+        "しかし",
+        "でも",
+        "けれども",
+        "だが"
+      ],
+      "unit_label": "",
+      "h1": "前と後ろが反対の内容だね。予想とちがう結果をつなぐことば。",
+      "h2": "「がんばった → 負けた」は予想と反対。反対をつなぐことば。",
+      "exp": "前後が反対の内容をつなぐのは逆接の接続語(しかし・でも・けれども)。練習したのに負けた、という反対の流れ。",
+      "src": "natsu2026_K_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0022",
+      "unit": "接続語",
+      "kai": 3,
+      "level": "共",
+      "cat": "国語",
+      "q": "次の( )に入る接続語をひらがなで書きましょう。「雨がふった。( )、試合は中止になった。」",
+      "ans": [
+        "だから",
+        "そこで",
+        "それで",
+        "したがって"
+      ],
+      "unit_label": "",
+      "h1": "前が理由で、後ろがその結果だね。",
+      "h2": "「雨 → だから中止」。理由と結果をつなぐことば。",
+      "exp": "前が原因・理由で後ろが結果のときは順接の接続語(だから・そこで・それで)。雨がふった、だから中止、という自然な流れ。",
+      "src": "natsu2026_K_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0023",
+      "unit": "同じ意味のことば",
+      "kai": 4,
+      "level": "基",
+      "cat": "国語",
+      "q": "「関心」とほぼ同じ意味の言葉を書きましょう。",
+      "ans": [
+        "興味",
+        "きょうみ"
+      ],
+      "unit_label": "",
+      "h1": "あることに心をひかれること。「◯◯がある」の形で使うよ。",
+      "h2": "「きょうみ」。漢字だと2字。",
+      "exp": "「関心」の類義語は「興味」。どちらも「あることに心がひかれる」という意味。似た意味のことば(類義語)はセットで覚えよう。",
+      "src": "natsu2026_K_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0024",
+      "unit": "同じ意味のことば",
+      "kai": 4,
+      "level": "共",
+      "cat": "国語",
+      "q": "「理由」とほぼ同じ意味の言葉を、ひらがなで書きましょう。",
+      "ans": [
+        "わけ",
+        "訳"
+      ],
+      "unit_label": "",
+      "h1": "「なぜそうなのか」を表すことば。「〜という◯け」の形。",
+      "h2": "「わけ」。ひらがな2字。",
+      "exp": "「理由」の類義語は「わけ(訳)」。どちらも「なぜそうなったか」を表す。",
+      "src": "natsu2026_K_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0025",
+      "unit": "ことばの使い方",
+      "kai": 4,
+      "level": "基",
+      "cat": "国語",
+      "q": "次の慣用句の( )に入る体の部分をひらがなで書きましょう。「いそがしくて、ねこの( )も借りたい。」",
+      "ans": [
+        "手",
+        "て"
+      ],
+      "unit_label": "",
+      "h1": "とてもいそがしいときに使う慣用句。体の一部が入るよ。",
+      "h2": "「ねこの◯も借りたい」。物をつかむ体の部分。",
+      "exp": "「ねこの手も借りたい」は、とてもいそがしいことのたとえ。慣用句は体の部分を使うものが多い(手・目・口・耳)。",
+      "src": "natsu2026_K_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0026",
+      "unit": "反対の意味のことば",
+      "kai": 6,
+      "level": "基",
+      "cat": "国語",
+      "q": "「成功」の反対の意味の言葉を書きましょう。",
+      "ans": [
+        "失敗",
+        "しっぱい"
+      ],
+      "unit_label": "",
+      "h1": "「うまくいく」の反対だよ。",
+      "h2": "「しっぱい」。漢字だと2字。",
+      "exp": "「成功」の対義語は「失敗」。反対の意味のことば(対義語)は必ずペアで覚えよう。",
+      "src": "natsu2026_K_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0027",
+      "unit": "反対の意味のことば",
+      "kai": 6,
+      "level": "共",
+      "cat": "国語",
+      "q": "「原因」の反対の意味の言葉を書きましょう。",
+      "ans": [
+        "結果",
+        "けっか"
+      ],
+      "unit_label": "",
+      "h1": "「原因」があって、そのあとに起こることだよ。",
+      "h2": "「けっか」。漢字だと2字。",
+      "exp": "「原因」の対義語は「結果」。原因→結果の関係で、物事の「もと」と「そのあと起きたこと」のペア。説明文でよく出る。",
+      "src": "natsu2026_K_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0028",
+      "unit": "反対の意味のことば",
+      "kai": 6,
+      "level": "共",
+      "cat": "国語",
+      "q": "「増加」の反対の意味の言葉を書きましょう。",
+      "ans": [
+        "減少",
+        "げんしょう"
+      ],
+      "unit_label": "",
+      "h1": "「ふえる」の反対、「へる」の意味だよ。",
+      "h2": "「げんしょう」。漢字だと2字。",
+      "exp": "「増加」(ふえる)の対義語は「減少」(へる)。グラフや説明文でよく出るペア。",
+      "src": "natsu2026_K_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0029",
+      "unit": "九州地方の自然",
+      "kai": 1,
+      "level": "基",
+      "cat": "社会",
+      "q": "熊本県にある、世界最大級のカルデラをもつ火山は何ですか。",
+      "ans": [
+        "阿蘇山",
+        "あそさん"
+      ],
+      "unit_label": "",
+      "h1": "熊本県にある、大きなくぼ地(カルデラ)で有名な火山だよ。",
+      "h2": "「◯そ山」。読みは「あそさん」。",
+      "exp": "阿蘇山(熊本県)は世界最大級のカルデラをもつ。カルデラは噴火でできた大きなくぼ地。九州には桜島など活発な火山が多い。",
+      "src": "natsu2026_S_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0030",
+      "unit": "九州地方の自然",
+      "kai": 1,
+      "level": "基",
+      "cat": "社会",
+      "q": "鹿児島・宮崎に広がる、火山灰が積もってできた台地を何といいますか。",
+      "ans": [
+        "シラス台地",
+        "しらすだいち"
+      ],
+      "unit_label": "",
+      "h1": "水もちが悪く、稲作に向かない火山灰の台地だよ。",
+      "h2": "「◯◯ス台地」。カタカナ3字+台地。",
+      "exp": "シラス台地は鹿児島・宮崎に広がる火山灰の台地。水もちが悪く稲作に向かないため、畜産・さつまいも・茶の栽培がさかん。",
+      "src": "natsu2026_S_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0031",
+      "unit": "九州地方の産業",
+      "kai": 2,
+      "level": "共",
+      "cat": "社会",
+      "q": "宮崎平野で、ビニールハウスを使って野菜の出荷時期を早める栽培方法を何といいますか。",
+      "ans": [
+        "促成栽培",
+        "そくせいさいばい"
+      ],
+      "unit_label": "",
+      "h1": "あたたかい気候を利用した「早づくり」だよ。ピーマン・きゅうりが有名。",
+      "h2": "「◯成栽培」。◯は「促(うながす)」。",
+      "exp": "促成栽培は出荷を早める早づくり。宮崎平野・高知平野のピーマン・きゅうりなどが有名。反対は抑制栽培(遅づくり)。",
+      "src": "natsu2026_S_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0032",
+      "unit": "九州地方の産業",
+      "kai": 2,
+      "level": "基",
+      "cat": "社会",
+      "q": "明治時代に八幡製鉄所ができ、鉄鋼業から発展した福岡県の工業地帯を何といいますか。",
+      "ans": [
+        "北九州工業地帯",
+        "きたきゅうしゅうこうぎょうちたい",
+        "北九州工業地域",
+        "きたきゅうしゅうこうぎょうちいき"
+      ],
+      "unit_label": "",
+      "h1": "福岡県北部にある、昔は鉄づくりで栄えた工業地帯だよ。",
+      "h2": "「◯◯◯工業地帯」。地方名と同じ「北九州」。",
+      "exp": "北九州工業地帯は八幡製鉄所を起点に発展した。今は地位が下がり工業地域とよばれることも多い。近年はIC(集積回路)工場も増加。",
+      "src": "natsu2026_S_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0033",
+      "unit": "中国・四国地方の自然",
+      "kai": 3,
+      "level": "共",
+      "cat": "社会",
+      "q": "香川県などの瀬戸内地方で、雨が少ないため農業用水をためるためにつくられたものを何といいますか。",
+      "ans": [
+        "ため池",
+        "ためいけ"
+      ],
+      "unit_label": "",
+      "h1": "瀬戸内地方は雨が少ないので、水をためておく池をたくさんつくったよ。",
+      "h2": "「ため◯」。水をためる池。",
+      "exp": "瀬戸内地方は中国山地と四国山地にはさまれ雨が少ない。そのため香川県の讃岐平野などでは農業用水を確保するため池が多い。",
+      "src": "natsu2026_S_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0034",
+      "unit": "中国・四国地方の自然",
+      "kai": 3,
+      "level": "基",
+      "cat": "社会",
+      "q": "中国・四国地方は気候で3つに分けられます。日本海側・瀬戸内と、あと1つは何側ですか。",
+      "ans": [
+        "太平洋側",
+        "たいへいようがわ"
+      ],
+      "unit_label": "",
+      "h1": "南の海に面した側だよ。夏に雨が多い。",
+      "h2": "「◯◯洋側」。南の海の名前+側。",
+      "exp": "中国・四国地方は日本海側(冬に雨・雪)、瀬戸内(1年中少雨)、太平洋側(夏に雨)の3つに分かれる。中国山地・四国山地が雨雲をさえぎるため。",
+      "src": "natsu2026_S_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0035",
+      "unit": "中国・四国地方の産業",
+      "kai": 4,
+      "level": "基",
+      "cat": "社会",
+      "q": "本州と四国をむすぶ3つのルートをまとめて何といいますか。",
+      "ans": [
+        "本州四国連絡橋",
+        "ほんしゅうしこくれんらくばし"
+      ],
+      "unit_label": "",
+      "h1": "本州と四国を橋でむすんだ3つのルートのことだよ(瀬戸大橋など)。",
+      "h2": "「本州四国◯◯橋」。",
+      "exp": "本州四国連絡橋は本州と四国をむすぶ3ルート(児島‐坂出=瀬戸大橋、神戸‐鳴門、尾道‐今治=しまなみ海道)。行き来が便利になった一方、フェリー利用は減った。",
+      "src": "natsu2026_S_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0036",
+      "unit": "中国・四国地方の産業",
+      "kai": 4,
+      "level": "共",
+      "cat": "社会",
+      "q": "岡山県倉敷市の水島などにある、石油化学コンビナートで有名な工業地域を何といいますか。",
+      "ans": [
+        "瀬戸内工業地域",
+        "せとうちこうぎょうちいき"
+      ],
+      "unit_label": "",
+      "h1": "瀬戸内海ぞいに広がる、石油化学や鉄鋼がさかんな工業地域だよ。",
+      "h2": "「◯◯内工業地域」。読みは「せとうち」。",
+      "exp": "瀬戸内工業地域は瀬戸内海ぞいに広がり、倉敷市水島の石油化学コンビナートなどが有名。塩田や工場用地のあとを利用して発展した。",
+      "src": "natsu2026_S_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0037",
+      "unit": "近畿地方の自然",
+      "kai": 5,
+      "level": "基",
+      "cat": "社会",
+      "q": "滋賀県にある、日本でいちばん大きい湖は何ですか。",
+      "ans": [
+        "琵琶湖",
+        "びわこ"
+      ],
+      "unit_label": "",
+      "h1": "滋賀県の面積の大部分をしめる、日本最大の湖だよ。",
+      "h2": "「◯◯湖」。読みは「びわこ」。",
+      "exp": "琵琶湖は滋賀県にある日本最大の湖。近畿地方の人々の飲み水をささえ、瀬田川→淀川となって大阪湾へ流れる。",
+      "src": "natsu2026_S_kai5",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0038",
+      "unit": "近畿地方の自然",
+      "kai": 5,
+      "level": "共",
+      "cat": "社会",
+      "q": "三重・奈良・和歌山にまたがる、日本でいちばん大きい半島は何ですか。",
+      "ans": [
+        "紀伊半島",
+        "きいはんとう"
+      ],
+      "unit_label": "",
+      "h1": "近畿地方の南がわにある、日本最大の半島だよ。",
+      "h2": "「◯◯半島」。読みは「きいはんとう」。",
+      "exp": "紀伊半島は三重・奈良・和歌山にまたがる日本最大の半島。雨が多く、吉野すぎ・尾鷲ひのきなど林業がさかん。",
+      "src": "natsu2026_S_kai5",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0039",
+      "unit": "近畿地方の産業",
+      "kai": 6,
+      "level": "基",
+      "cat": "社会",
+      "q": "大阪府と兵庫県に広がる工業地帯を何といいますか。",
+      "ans": [
+        "阪神工業地帯",
+        "はんしんこうぎょうちたい"
+      ],
+      "unit_label": "",
+      "h1": "大「阪」と神戸(「神」)をあわせた名前だよ。",
+      "h2": "「◯◯工業地帯」。読みは「はんしん」。",
+      "exp": "阪神工業地帯は大阪・兵庫に広がる。中小工場が多く、金属工業などがさかん。4大工業地帯の一つ。",
+      "src": "natsu2026_S_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0040",
+      "unit": "近畿地方の産業",
+      "kai": 6,
+      "level": "共",
+      "cat": "社会",
+      "q": "三重県の志摩半島にある英虞湾(あごわん)で、養殖がさかんなものは何ですか。",
+      "ans": [
+        "真珠",
+        "しんじゅ"
+      ],
+      "unit_label": "",
+      "h1": "リアス海岸の静かな入り江を利用して、宝石になる貝を育てているよ。",
+      "h2": "「◯◯」。ネックレスになる宝石。",
+      "exp": "三重県の英虞湾(志摩半島)は真珠の養殖で有名。リアス海岸の波が静かな入り江が養殖に向いている。",
+      "src": "natsu2026_S_kai6",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0041",
+      "unit": "種子のつくりと発芽",
+      "kai": 1,
+      "level": "基",
+      "cat": "理科",
+      "q": "インゲンマメの発芽に必要な3つの条件は、水・空気と、あと1つは何ですか。",
+      "ans": [
+        "適当な温度",
+        "てきとうなおんど"
+      ],
+      "unit_label": "",
+      "h1": "冬に種をまいても芽が出ないのはなぜ? あたたかさに関係するよ。",
+      "h2": "「て◯とうな おんど」。寒すぎても暑すぎても発芽しにくい。",
+      "exp": "発芽に必要な3条件は「水・空気・適当な温度」。日光(光)は必要ない。光が必要になるのは、発芽したあと光合成で成長するとき。",
+      "src": "natsu2026_R_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0042",
+      "unit": "種子のつくりと発芽",
+      "kai": 1,
+      "level": "基",
+      "cat": "理科",
+      "q": "インゲンマメの種子が発芽するとき、日光は必要ですか、必要でないですか。",
+      "ans": [
+        "必要でない",
+        "ひつようでない",
+        "いらない",
+        "必要ない",
+        "ひつようない"
+      ],
+      "unit_label": "",
+      "h1": "土の中(暗いところ)でも芽は出るよね。",
+      "h2": "発芽に必要なのは水・空気・適当な温度の3つだけ。光はその中にある?",
+      "exp": "発芽に日光は必要ない。必要なのは水・空気・適当な温度の3つ。日光がいるのは、発芽後に葉で光合成して成長するとき。",
+      "src": "natsu2026_R_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0043",
+      "unit": "種子のつくりと発芽",
+      "kai": 1,
+      "level": "基",
+      "cat": "理科",
+      "q": "インゲンマメの種子で、発芽するための養分をたくわえている部分を何といいますか。",
+      "ans": [
+        "子葉",
+        "しよう"
+      ],
+      "unit_label": "",
+      "h1": "インゲンマメは、芽が出ると最初の葉になる部分に養分をためているよ。",
+      "h2": "「◯よう」。2枚あって、発芽して最初の葉になる部分。",
+      "exp": "インゲンマメ(無はい乳種子)は子葉に養分をたくわえる。イネやカキ(有はい乳種子)ははい乳にたくわえる。養分の場所は種子の種類でちがう。",
+      "src": "natsu2026_R_kai1",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0044",
+      "unit": "根・くき・葉のつくり",
+      "kai": 2,
+      "level": "共",
+      "cat": "理科",
+      "q": "植物のくきの中で、根から吸い上げた水や肥料分の通り道を何といいますか。",
+      "ans": [
+        "道管",
+        "どうかん"
+      ],
+      "unit_label": "",
+      "h1": "「水の道」の管だよ。根から葉へ水を運ぶ。",
+      "h2": "「◯うかん」。水や肥料分が通る管。",
+      "exp": "水や肥料分の通り道は道管、葉でつくられた栄養分の通り道は師管。まとめて維管束という。「水は道管」で覚えよう。",
+      "src": "natsu2026_R_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0045",
+      "unit": "根・くき・葉のつくり",
+      "kai": 2,
+      "level": "基",
+      "cat": "理科",
+      "q": "子葉が2枚の植物(双子葉植物)の根は、太い主根と、もう1つは何という根からできていますか。",
+      "ans": [
+        "側根",
+        "そっこん"
+      ],
+      "unit_label": "",
+      "h1": "主根から枝分かれして出る、細い根のことだよ。",
+      "h2": "「◯っこん」。主根の横から出る細い根。",
+      "exp": "双子葉植物の根は主根と側根。単子葉植物はひげ根。子葉の枚数と根のつくりはセット(双子葉=主根・側根、単子葉=ひげ根)。",
+      "src": "natsu2026_R_kai2",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0046",
+      "unit": "植物の働き",
+      "kai": 3,
+      "level": "基",
+      "cat": "理科",
+      "q": "植物が日光を受けて、水と二酸化炭素からデンプンと酸素をつくる働きを何といいますか。",
+      "ans": [
+        "光合成",
+        "こうごうせい"
+      ],
+      "unit_label": "",
+      "h1": "植物が日光を使って栄養(デンプン)をつくる働きだよ。",
+      "h2": "「◯うごうせい」。葉の緑色の部分(葉緑体)で行われる。",
+      "exp": "光合成は、日光を使って水と二酸化炭素からデンプンと酸素をつくる働き。葉緑体で行われ、できたデンプンはヨウ素液で青むらさき色になる。",
+      "src": "natsu2026_R_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0047",
+      "unit": "植物の働き",
+      "kai": 3,
+      "level": "共",
+      "cat": "理科",
+      "q": "植物の体の中の水が、葉の気孔から水蒸気となって出ていく働きを何といいますか。",
+      "ans": [
+        "蒸散",
+        "じょうさん"
+      ],
+      "unit_label": "",
+      "h1": "葉の裏に多い小さな穴(気孔)から、水が水蒸気になって出ていく働きだよ。",
+      "h2": "「◯ょうさん」。蒸発に近い言葉。",
+      "exp": "蒸散は、根から吸った水が葉の気孔から水蒸気となって出る働き。気孔は葉の裏に多い。蒸散がさかんだと根からの吸水もさかんになる。",
+      "src": "natsu2026_R_kai3",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0048",
+      "unit": "節足動物",
+      "kai": 4,
+      "level": "基",
+      "cat": "理科",
+      "q": "こん虫のあしは何本ありますか。",
+      "ans": [
+        "6"
+      ],
+      "unit_label": "本",
+      "h1": "クモは8本だけど、こん虫はそれより少ないよ。",
+      "h2": "こん虫のあしは3対(つい)。3×2=?",
+      "exp": "こん虫のあしは6本で、すべて「むね」から出ている。クモ(8本)やダンゴムシはこん虫ではない。あしの本数はこん虫を見分ける目印。",
+      "src": "natsu2026_R_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0049",
+      "unit": "節足動物",
+      "kai": 4,
+      "level": "共",
+      "cat": "理科",
+      "q": "バッタのように「さなぎ」の時期がない育ち方を、何変態といいますか。",
+      "ans": [
+        "不完全変態",
+        "ふかんぜんへんたい",
+        "不完全へんたい"
+      ],
+      "unit_label": "",
+      "h1": "たまご→よう虫→成虫と、さなぎを通らない育ち方だよ。",
+      "h2": "「◯完全変態」。◯は「不」。",
+      "exp": "さなぎにならない育ち方が不完全変態(バッタ・トンボ・セミ・コオロギなど)。さなぎになるのが完全変態(チョウ・カブトムシなど)。",
+      "src": "natsu2026_R_kai4",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0050",
+      "unit": "せきつい動物",
+      "kai": 5,
+      "level": "基",
+      "cat": "理科",
+      "q": "背骨のある動物(せきつい動物)を5つに分けたとき、魚類・両生類・鳥類・ほ乳類と、あと1つは何類ですか。",
+      "ans": [
+        "は虫類",
+        "はちゅうるい",
+        "爬虫類",
+        "ハ虫類"
+      ],
+      "unit_label": "",
+      "h1": "トカゲ・ヘビ・カメのなかまだよ。",
+      "h2": "「◯虫類」。◯は「は(爬)」。",
+      "exp": "せきつい動物は魚類・両生類・は虫類・鳥類・ほ乳類の5つ。は虫類はトカゲ・ヘビ・カメ・ワニなど。5つ全部言えるようにしよう。",
+      "src": "natsu2026_R_kai5",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0051",
+      "unit": "せきつい動物",
+      "kai": 5,
+      "level": "共",
+      "cat": "理科",
+      "q": "卵ではなく、母親の体内である程度育った子をうむうまれ方を何といいますか。",
+      "ans": [
+        "胎生",
+        "たいせい"
+      ],
+      "unit_label": "",
+      "h1": "イヌやヒトのように、おなかの中で育ってからうまれる方だよ。",
+      "h2": "「◯生」。◯は「胎」。",
+      "exp": "子をうむうまれ方が胎生で、ほ乳類だけがこれ。卵をうむのは卵生(魚類・両生類・は虫類・鳥類)。ほ乳類だけが胎生。",
+      "src": "natsu2026_R_kai5",
+      "errType": "予習"
+    },
+    {
+      "id": "Y0052",
+      "unit": "生物どうしのつながり",
+      "kai": 6,
+      "level": "基",
+      "cat": "理科",
+      "q": "「食べる・食べられる」の関係が、くさりのようにつながっていることを何といいますか。",
+      "ans": [
+        "食物連鎖",
+        "しょくもつれんさ"
+      ],
+      "unit_label": "",
+      "h1": "植物→草食動物→肉食動物と、食べる・食べられるがつながっているよ。",
+      "h2": "「食物◯◯」。くさり(チェーン)のようにつながる。",
+      "exp": "食べる・食べられるの関係のつながりを食物連鎖という。植物(自分で養分をつくる生産者)→草食動物→肉食動物とつながる。",
+      "src": "natsu2026_R_kai6",
+      "errType": "予習"
+    }
+  ]
+}
+`;
+/*==BANK_Y_END==*/
+
+/*==SKIN_FUKUSHU_M_START==*/
+const SKIN_FUKUSHU_M_RAW = `
+{
+  "skinVersion": "map_japan_2026_07",
+  "title": "さんすうクエスト 日本一周",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#FF8A3D",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "すごい!", "その調子!", "ナイス!", "かんぺき!", "天才かも!?"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがいは宝物。", "式を書けたならOK。次は答えまでつなげよう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"北海道","emoji":"🐄"}, {"name":"青森","emoji":"🍎"}, {"name":"岩手","emoji":"🌰"},
+      {"name":"秋田","emoji":"🌾"}, {"name":"宮城","emoji":"🐟"}, {"name":"山形","emoji":"🍒"},
+      {"name":"福島","emoji":"🍑"}, {"name":"茨城","emoji":"🥬"}, {"name":"栃木","emoji":"🍓"},
+      {"name":"群馬","emoji":"♨️"}, {"name":"埼玉","emoji":"🥕"}, {"name":"千葉","emoji":"🥜"},
+      {"name":"東京","emoji":"🗼"}, {"name":"神奈川","emoji":"⛵"}, {"name":"新潟","emoji":"🍙"},
+      {"name":"富山","emoji":"🦐"}, {"name":"石川","emoji":"🦀"}, {"name":"福井","emoji":"🦕"},
+      {"name":"山梨","emoji":"🍇"}, {"name":"長野","emoji":"🍎"}, {"name":"岐阜","emoji":"🏯"},
+      {"name":"静岡","emoji":"🍵"}, {"name":"愛知","emoji":"🚗"}, {"name":"三重","emoji":"🦪"},
+      {"name":"滋賀","emoji":"🌊"}, {"name":"京都","emoji":"⛩️"}, {"name":"大阪","emoji":"🐙"},
+      {"name":"兵庫","emoji":"🐮"}, {"name":"奈良","emoji":"🦌"}, {"name":"和歌山","emoji":"🍊"},
+      {"name":"鳥取","emoji":"🍈"}, {"name":"島根","emoji":"⛩️"}, {"name":"岡山","emoji":"🍑"},
+      {"name":"広島","emoji":"🦪"}, {"name":"山口","emoji":"🐡"}, {"name":"徳島","emoji":"🌊"},
+      {"name":"香川","emoji":"🍜"}, {"name":"愛媛","emoji":"🍊"}, {"name":"高知","emoji":"🐟"},
+      {"name":"福岡","emoji":"🍜"}, {"name":"佐賀","emoji":"🍈"}, {"name":"長崎","emoji":"🐋"},
+      {"name":"熊本","emoji":"🐴"}, {"name":"大分","emoji":"♨️"}, {"name":"宮崎","emoji":"🐔"},
+      {"name":"鹿児島","emoji":"🌋"}, {"name":"沖縄","emoji":"🌺"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "日本一周たっせい!! ゴールの沖縄に到着だ🌺"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "そろばん侍"},
+    {"cond": "hintCorrect5", "name": "軍師"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト勇者"},
+    {"cond": "totalCorrect50", "name": "旅の達人"},
+    {"cond": "totalCorrect100", "name": "日本一周マスター"}
+  ]
+}
+`;
+/*==SKIN_FUKUSHU_M_END==*/
+
+/*==SKIN_FUKUSHU_R_START==*/
+const SKIN_FUKUSHU_R_RAW = `
+{
+  "skinVersion": "lab_journey_2026_07",
+  "title": "りかクエスト 研究所たんけん",
+  "writeTip": "まずノートに漢字で書いてみよう。それが「さいしょの一手」!",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#2FAF96",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "すごい!", "その調子!", "はかせに近づいた!", "かんぺき!", "天才かも!?"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがいは宝物。", "漢字で書けたならOK。次は完璧をねらおう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"じっけん室にゅうこう","emoji":"🚪"},
+      {"name":"ビーカーコーナー","emoji":"🧪"},
+      {"name":"pHけんさ室","emoji":"🌡️"},
+      {"name":"じょうはつざら室","emoji":"⚗️"},
+      {"name":"すいようえきラボ卒業","emoji":"🧫"},
+      {"name":"てんもんドーム入口","emoji":"🔭"},
+      {"name":"たいようかんそくデッキ","emoji":"🌞"},
+      {"name":"いど・けいどマップ室","emoji":"🧭"},
+      {"name":"せいざかんそく室","emoji":"⭐"},
+      {"name":"つきのみちかけラボ","emoji":"🌕"},
+      {"name":"てんもんラボ卒業","emoji":"🪐"},
+      {"name":"こん虫はかせコーナー","emoji":"🐛"},
+      {"name":"せきついどうぶつ図かん室","emoji":"🦴"},
+      {"name":"へんたいすいぞくかん","emoji":"🐸"},
+      {"name":"いきものラボ卒業","emoji":"🧬"},
+      {"name":"りかはかせにんてい","emoji":"🏅"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "りかはかせ にんてい!! おめでとう🔬🏅"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "かんさつ名人"},
+    {"cond": "hintCorrect5", "name": "じっけん助手"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト研究員"},
+    {"cond": "totalCorrect20", "name": "けんきゅういん"},
+    {"cond": "totalCorrect50", "name": "しゅにんけんきゅういん"}
+  ]
+}
+`;
+/*==SKIN_FUKUSHU_R_END==*/
+
+/*==SKIN_FUKUSHU_S_START==*/
+const SKIN_FUKUSHU_S_RAW = `
+{
+  "skinVersion": "map_japan_2026_07_shakai",
+  "title": "しゃかいクエスト 日本一周",
+  "writeTip": "まずノートにひらがなで書いてみよう。それが「さいしょの一手」!",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#3D7BD9",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "すごい!", "その調子!", "たんけん隊長みたい!", "かんぺき!", "物知りだね!?"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがいは宝物。", "ひらがなで書けたならOK。次は漢字もねらおう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"北海道","emoji":"🐄"}, {"name":"青森","emoji":"🍎"}, {"name":"岩手","emoji":"🌰"},
+      {"name":"秋田","emoji":"🌾"}, {"name":"宮城","emoji":"🐟"}, {"name":"山形","emoji":"🍒"},
+      {"name":"福島","emoji":"🍑"}, {"name":"茨城","emoji":"🥬"}, {"name":"栃木","emoji":"🍓"},
+      {"name":"群馬","emoji":"♨️"}, {"name":"埼玉","emoji":"🥕"}, {"name":"千葉","emoji":"🥜"},
+      {"name":"東京","emoji":"🗼"}, {"name":"神奈川","emoji":"⛵"}, {"name":"新潟","emoji":"🍙"},
+      {"name":"富山","emoji":"🦐"}, {"name":"石川","emoji":"🦀"}, {"name":"福井","emoji":"🦕"},
+      {"name":"山梨","emoji":"🍇"}, {"name":"長野","emoji":"🍎"}, {"name":"岐阜","emoji":"🏯"},
+      {"name":"静岡","emoji":"🍵"}, {"name":"愛知","emoji":"🚗"}, {"name":"三重","emoji":"🦪"},
+      {"name":"滋賀","emoji":"🌊"}, {"name":"京都","emoji":"⛩️"}, {"name":"大阪","emoji":"🐙"},
+      {"name":"兵庫","emoji":"🐮"}, {"name":"奈良","emoji":"🦌"}, {"name":"和歌山","emoji":"🍊"},
+      {"name":"鳥取","emoji":"🍈"}, {"name":"島根","emoji":"⛩️"}, {"name":"岡山","emoji":"🍑"},
+      {"name":"広島","emoji":"🦪"}, {"name":"山口","emoji":"🐡"}, {"name":"徳島","emoji":"🌊"},
+      {"name":"香川","emoji":"🍜"}, {"name":"愛媛","emoji":"🍊"}, {"name":"高知","emoji":"🐟"},
+      {"name":"福岡","emoji":"🍜"}, {"name":"佐賀","emoji":"🍈"}, {"name":"長崎","emoji":"🐋"},
+      {"name":"熊本","emoji":"🐴"}, {"name":"大分","emoji":"♨️"}, {"name":"宮崎","emoji":"🐔"},
+      {"name":"鹿児島","emoji":"🌋"}, {"name":"沖縄","emoji":"🌺"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "日本一周たっせい!! ゴールの沖縄に到着だ🌺"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "地図読み名人"},
+    {"cond": "hintCorrect5", "name": "たんけん助手"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト探検家"},
+    {"cond": "totalCorrect20", "name": "見習い探検家"},
+    {"cond": "totalCorrect50", "name": "日本地理マスター"}
+  ]
+}
+`;
+/*==SKIN_FUKUSHU_S_END==*/
+
+/*==SKIN_FUKUSHU_K_START==*/
+const SKIN_FUKUSHU_K_RAW = `
+{
+  "skinVersion": "word_journey_2026_07",
+  "title": "こくごクエスト ことばの旅",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#C86FA0",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "ことばの力がついてきた!", "その調子!", "ナイスな読み!", "かんぺき!", "いまの一問、きれいだったよ!"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがえた言葉ほどよくおぼえる。", "意味が言えたならOK。次は書くところまでつなげよう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "writeTip": "漢字はノートにも書いてみよう",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"ことばの村","emoji":"🏡"}, {"name":"ひらがな野原","emoji":"🌸"},
+      {"name":"カタカナ坂","emoji":"⛰️"}, {"name":"漢字の森","emoji":"🌳"},
+      {"name":"部首の谷","emoji":"🍃"}, {"name":"音読みの泉","emoji":"💧"},
+      {"name":"訓読みの滝","emoji":"🌊"}, {"name":"熟語の橋","emoji":"🌉"},
+      {"name":"ことわざ峠","emoji":"🦉"}, {"name":"慣用句の市場","emoji":"🏮"},
+      {"name":"辞書の塔","emoji":"📕"}, {"name":"作文の丘","emoji":"✏️"},
+      {"name":"段落の階段","emoji":"🪜"}, {"name":"主語の島","emoji":"🏝️"},
+      {"name":"述語の港","emoji":"⛵"}, {"name":"気もちの海","emoji":"💙"},
+      {"name":"物語の城","emoji":"🏰"}, {"name":"詩のあずまや","emoji":"🎐"},
+      {"name":"説明文の書庫","emoji":"📚"}, {"name":"ことばの大図書館","emoji":"📖"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "ことばの旅、たっせい!! 大図書館のとびらが開いたよ📖"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "ことば名人"},
+    {"cond": "hintCorrect5", "name": "辞書の達人"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト文豪"},
+    {"cond": "totalCorrect50", "name": "ことばの旅人"},
+    {"cond": "totalCorrect100", "name": "ことばの大賢者"}
+  ]
+}
+`;
+/*==SKIN_FUKUSHU_K_END==*/
+
+/*==SKIN_BOSS_START==*/
+const SKIN_BOSS_RAW = `
+{
+  "skinVersion": "boss_20260728",
+  "title": "テストじゅんびクエスト",
+  "boss": {
+    "name": "なつやすみ大魔王",
+    "emoji": "🏖️",
+    "flavor": "「われの弱点? …きみが4きょうか ぜんぶ 思い出すと、夏のパワーが きえてしまうのじゃ…」",
+    "lines": {
+      "appear": "ふはは! 7がつ28にちの テストで まっておるぞ! 夏のチカラで きみを ねむ〜く させてやる〜",
+      "damage": ["うっ、思い出しおった!", "ぐぬぬ…おぼえておるとは!", "その一問、きいたぞ…", "まぶしい…やる気がまぶしい!"],
+      "counter": "まちがえた問題の リベンジせいこう! これは クリティカル〜!!",
+      "sealBreak": "ひとつの きょうかを こくふくされた! 封印が とけていく…!",
+      "powerUp": "新しい回を 習ってきたな…! 夏の魔王、パワーアップじゃ!",
+      "defeat": "まいった〜! 4きょうか ぜんぶ そろえるとは…! きみの勝ちじゃ〜!!",
+      "escape": "きょうは このへんで ねむらせて もらうかの…(にげたのは 魔王のほう)"
+    }
+  },
+  "colors": {
+    "bg": "#FFF9E8",
+    "ink": "#3A2E2A",
+    "accent": "#FF8A3D",
+    "ok": "#2FBF8F",
+    "ng": "#F26D6D",
+    "star": "#FFC53D"
+  },
+  "praise": ["ナイスな一撃!", "その調子!", "夏の魔王に ダメージ!", "よくおぼえてた!", "さえてるね!"],
+  "cheer": ["おしい! つぎは あたる!", "だいじょうぶ、いまので おぼえた!", "まちがえても へいき。リベンジがあるよ!", "ヒントを 見てもOK!"],
+  "hintPraise": "ヒントを つかうのは かしこい さくせん! 軍師の一手じゃ!",
+  "writeTip": "まずノートに 式・ことばを 書こう(魔王は 書かれるのが にがて)",
+  "titles": [
+    {"cond": "noHintStreak3", "name": "れんぞく正解マスター"},
+    {"cond": "hintCorrect5", "name": "軍師"},
+    {"cond": "revengeWin", "name": "リベンジャー"}
+  ]
+}
+`;
+/*==SKIN_BOSS_END==*/
+
+/* ===== src/engine/util.js ===== */
+/* =====================================================================
+   engine/util.js — 汎用ユーティリティ・日付
+   ===================================================================== */
+
+function pad2(n){ return String(n).padStart(2, "0"); }
+
+/* Fisher-Yates。rnd を差し替えられるようにしてテストから決定的に扱えるようにする */
+function shuffle(arr, rnd){
+  const r = rnd || Math.random;
+  const b = [...arr];
+  for(let i=b.length-1; i>0; i--){ const j = Math.floor(r()*(i+1)); [b[i],b[j]] = [b[j],b[i]]; }
+  return b;
+}
+
+function pick(arr, rnd){
+  if(!arr || !arr.length) return "";
+  const r = rnd || Math.random;
+  return arr[Math.floor(r()*arr.length)];
+}
+
+/* ---------- 日付(state.last 用の "YYYY-MM-DD") ---------- */
+function midnight(d){ return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+
+function dateKey(d){
+  return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+}
+
+function parseDateKey(s){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+  if(!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function daysBetween(from, to){
+  return Math.floor((midnight(to) - midnight(from)) / 86400000);
+}
+
+/* HTMLエスケープ。バンクJSONは家庭内で編集されるがUIに素で流し込まないための保険 */
+function esc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+
+/* ===== src/engine/normalize.js ===== */
+/* =====================================================================
+   engine/normalize.js — 入力モード自動判定と答え合わせ用の正規化
+   仕様: fukushu §6(予習エンジンも同一実装)
+   ===================================================================== */
+
+/* 全ての正答候補が数値/分数のときだけ数字キーパッドモード。
+   それ以外(漢字・かな回答)はテキスト入力モード */
+function isNumericQuestion(q){
+  return q.ans.every(a => /^-?\d+(\.\d+)?$/.test(a) || /^\d+\/\d+$/.test(a));
+}
+
+function normZen(s){
+  return s.replace(/[０-９．／]/g, c => String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+}
+
+function norm(s, numeric){
+  const z = normZen(s);
+  if(numeric){
+    return z.replace(/[\s。、点円個こ回人gkmcページ]/g, "").trim();
+  }
+  /* テキストモード: 空白・句読点を除去し、カタカナ→ひらがなに折り畳んで比較
+     (「すいさんかカルシウム」のようなかな交じり入力を正解にするため。答え側にも同じ正規化がかかる) */
+  return z.replace(/[\s。、！？!?]/g, "")
+          .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0)-0x60))
+          .trim();
+}
+
+function answerMatches(q, input){
+  const numeric = isNumericQuestion(q);
+  const okSet = new Set(q.ans.map(a => norm(a, numeric)));
+  return okSet.has(norm(input, numeric));
+}
+
+
+/* ===== src/engine/savecode.js ===== */
+/* =====================================================================
+   engine/savecode.js — セーブコード V2(発行/復元)+ V1 互換読み込み
+   仕様: fukushu §5 / v4.1 §4.4
+   ・ビット列は retired 含む全問題(ALL_QS)の id 昇順(fukushu §5 教訓・必須確認項目)
+   ・payload = 問題数(10bit) + 箱番号(2bit×問題数) + xp(12bit)
+   ・v4.1 記録1(承認済): チェックサム算法は全科目 fukushu 版に統一する。
+     旧 yoshu 版は sum*31 のハッシュだったが、旧予習コードは §8-3 により移行対象外。
+   ・箱の既定値は科目系統ごとに据え置き(v4.1 記録3): 復習=箱2 / 予習=未出題(別管理)
+   ===================================================================== */
+
+const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+/* コード上で「箱の指定がない」問題をどう詰めるか。
+   fukushu: 未出題=箱2 なので 2 で詰める / yoshu: 未出題は箱と別管理なので 0 で詰める */
+const SAVE_PACK_DEFAULT = { fukushu: 2, yoshu: 0 };
+
+function bitsFromInt(n, len){ return (n>>>0).toString(2).padStart(len, "0"); }
+
+/* 状態文字列の各文字コード和 mod 32(fukushu §5) */
+function checksum(str){
+  let sum = 0;
+  for(const ch of str) sum += ch.charCodeAt(0);
+  return B32[sum % 32];
+}
+
+function todayDateStr(now){
+  const d = now || new Date();
+  return pad2(d.getFullYear()%100) + pad2(d.getMonth()+1) + pad2(d.getDate());
+}
+
+function parseCodeDateStr(dateStr){
+  const yy = parseInt(dateStr.slice(0,2),10),
+        mm = parseInt(dateStr.slice(2,4),10)-1,
+        dd = parseInt(dateStr.slice(4,6),10);
+  if(mm<0 || mm>11 || dd<1 || dd>31) return null;
+  const d = new Date(2000+yy, mm, dd);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+function bitsToB32(bits){
+  let b = bits;
+  while(b.length % 5 !== 0) b += "0";
+  let out = "";
+  for(let i=0; i<b.length; i+=5) out += B32[parseInt(b.substr(i,5),2)];
+  return out;
+}
+
+function b32ToBits(str){
+  let bits = "";
+  for(const ch of str.toUpperCase()){
+    const idx = B32.indexOf(ch);
+    if(idx < 0) throw new Error("invalid char");
+    bits += bitsFromInt(idx, 5);
+  }
+  return bits;
+}
+
+/* ---------- V1形式(問題数を持たない旧形式。互換読み込み専用。新規発行はしない) ---------- */
+function packStateV1(allQs, boxes, xp, mode){
+  const dflt = SAVE_PACK_DEFAULT[mode];
+  let bits = "";
+  allQs.forEach(q => { bits += bitsFromInt(boxes[q.id] ?? dflt, 2); });
+  bits += bitsFromInt(Math.min(xp, 4095), 12);
+  return bitsToB32(bits);
+}
+
+function unpackStateV1(str, allQs){
+  const raw = b32ToBits(str);
+  const needed = allQs.length*2 + 12;
+  if(raw.length < needed) throw new Error("too short");
+  const bits = raw.slice(0, needed);
+  const boxes = {};
+  allQs.forEach((q,i) => { boxes[q.id] = parseInt(bits.substr(i*2,2),2); });
+  const xp = parseInt(bits.substr(allQs.length*2, 12), 2);
+  return { boxes, xp };
+}
+
+/* ---------- V2形式(問題数を10bitで持つ。バンクが増えても古いコードを壊さない) ---------- */
+function packStateV2(allQs, boxes, xp, mode){
+  const dflt = SAVE_PACK_DEFAULT[mode];
+  const n = allQs.length;
+  let bits = bitsFromInt(n, 10);
+  allQs.forEach(q => { bits += bitsFromInt(boxes[q.id] ?? dflt, 2); });
+  bits += bitsFromInt(Math.min(xp, 4095), 12);
+  return bitsToB32(bits);
+}
+
+function unpackStateV2(str){
+  const raw = b32ToBits(str);
+  if(raw.length < 10) throw new Error("too short");
+  const n = parseInt(raw.substr(0,10), 2);
+  const needed = 10 + n*2 + 12;
+  if(raw.length < needed) throw new Error("too short");
+  const bits = raw.slice(0, needed);
+  const codeBoxes = [];
+  for(let i=0; i<n; i++) codeBoxes.push(parseInt(bits.substr(10+i*2,2),2));
+  const xp = parseInt(bits.substr(10+n*2,12), 2);
+  return { n, codeBoxes, xp };
+}
+
+/* V2のcodeBoxes(コード作成時点でのid昇順n件)を現在のALL_QSへ写像。
+   増えた分(現在の問題数 − n)は「未出題」として初期化する。
+   ・fukushu: 未出題=箱2 なので 2 を書き込む
+   ・yoshu:   未出題はキー未設定で表現するので書き込まない */
+function applyV2Code(decoded, allQs, mode){
+  if(decoded.n > allQs.length) return { error: "bank_old" };
+  const boxes = {};
+  allQs.forEach((q,i) => {
+    if(i < decoded.n) boxes[q.id] = decoded.codeBoxes[i];
+    else if(mode === "fukushu") boxes[q.id] = 2;
+  });
+  return { boxes, xp: decoded.xp };
+}
+
+function makeSaveCode(allQs, boxes, xp, mode, now){
+  const state = packStateV2(allQs, boxes, xp, mode);
+  return `V2-${todayDateStr(now)}-${state}${checksum(state)}`;
+}
+
+function parseSaveCode(raw, allQs, mode){
+  const code = (raw || "").trim().toUpperCase();
+
+  let m = code.match(/^V2-(\d{6})-([A-Z2-7]+)$/);
+  if(m){
+    const body = m[2];
+    if(body.length < 2) return null;
+    const state = body.slice(0,-1), chk = body.slice(-1);
+    if(checksum(state) !== chk) return null;
+    let decoded;
+    try{ decoded = unpackStateV2(state); }catch(e){ return null; }
+    const applied = applyV2Code(decoded, allQs, mode);
+    if(applied.error) return { error: applied.error };
+    const savedDate = parseCodeDateStr(m[1]);
+    if(!savedDate) return null;
+    return { boxes: applied.boxes, xp: applied.xp, savedDate, version: "V2" };
+  }
+
+  /* 旧V1コードの互換読み込み。現在の問題数を前提にチェックサム照合するベストエフォート方式 */
+  m = code.match(/^V1-(\d{6})-([A-Z2-7]+)$/);
+  if(m){
+    const body = m[2];
+    if(body.length < 2) return null;
+    const state = body.slice(0,-1), chk = body.slice(-1);
+    if(checksum(state) !== chk) return null;
+    let decoded;
+    try{ decoded = unpackStateV1(state, allQs); }catch(e){ return null; }
+    const savedDate = parseCodeDateStr(m[1]);
+    if(!savedDate) return null;
+    return { boxes: decoded.boxes, xp: decoded.xp, savedDate, version: "V1" };
+  }
+
+  return null;
+}
+
+
+/* ===== src/engine/leitner.js ===== */
+/* =====================================================================
+   engine/leitner.js — ライトナー式スケジュールとセッション構成
+   仕様: fukushu §4(3/7/21日)/ yoshu §6(圧縮 0/1/3日)/ v4.1 §4.3(問題別 last 基準)
+   ===================================================================== */
+
+const INTERVALS = {
+  fukushu: { 0:0, 1:3, 2:7, 3:21 },
+  yoshu:   { 0:0, 1:1, 2:3,  3:3 }
+};
+
+const SESSION_SIZE = 8;
+const REVIEW_SLOTS = 4;
+
+/* v4.1 §4.3: 期日 = last[id] + 箱の間隔。last が無い問題は期日計算の対象外(未出題プールへ) */
+function isDueByLast(box, lastStr, today, intervals){
+  const last = parseDateKey(lastStr);
+  if(!last) return false;
+  return daysBetween(last, today) >= (intervals[box] ?? 0);
+}
+
+/* ---------- ふくしゅう(M/R/S/K)のセッション構成 ----------
+   fukushu §4:
+     間口(cat)選択時: リベンジ(箱0)は間口に関係なく最大2問混入
+       → 期日到来の復習(間口内)→ 残りを間口内から補完(不足時のみ全体から)
+     🎲おまかせミックス: 箱0は最大4問
+   v4.1 記録4(承認済): 箱0の間口またぎは復習側の現行挙動を据え置く
+   箱3も期日到来(21日)で必ず候補に含める(fukushu v2.1 の必須挙動)             */
+function buildSessionFukushu(liveQs, state, cat, today, rnd){
+  const boxes = state.boxes || {}, last = state.last || {};
+  const iv = INTERVALS.fukushu;
+  const inCat = q => !cat || q.cat === cat;
+
+  const pool0=[], due1=[], due2=[], due3=[];
+  liveQs.forEach(q => {
+    const box = boxes[q.id] ?? 2;              // 復習の未出題は箱2扱い(v4.1 記録3)
+    if(box === 0) pool0.push(q);               // リベンジは間口に関係なく候補
+    else if(box === 1 && inCat(q) && isDueByLast(1, last[q.id], today, iv)) due1.push(q);
+    else if(box === 2 && inCat(q) && isDueByLast(2, last[q.id], today, iv)) due2.push(q);
+    else if(box === 3 && inCat(q) && isDueByLast(3, last[q.id], today, iv)) due3.push(q);
+  });
+
+  const revCap = cat ? 2 : 4;
+  const review = [
+    ...shuffle(pool0, rnd).slice(0, revCap),
+    ...shuffle(due1, rnd), ...shuffle(due2, rnd), ...shuffle(due3, rnd)
+  ].slice(0, REVIEW_SLOTS);
+
+  const revengeIds = new Set(pool0.map(q => q.id));
+  const usedIds = new Set(review.map(q => q.id));
+  const catPool = shuffle(liveQs.filter(q => !usedIds.has(q.id) && inCat(q)), rnd);
+  const anyPool = shuffle(liveQs.filter(q => !usedIds.has(q.id) && !inCat(q)), rnd);
+  const needed = Math.max(0, SESSION_SIZE - review.length);
+  const fill = [...catPool, ...anyPool].slice(0, needed);   // 間口内で足りなければ全体から補完
+
+  return shuffle([...review, ...fill], rnd)
+    .map(q => ({ ...q, _revenge: revengeIds.has(q.id) }));
+}
+
+/* ---------- じゅんび(Y)のセッション構成 ----------
+   yoshu §6 v1.3.1(間口の純粋化):
+     間口(科目)を選んだ場合、箱0・期日到来の復習・未出題・補完のすべてを間口内に限定する。
+     間口内の解放済み問題が8問に満たない場合はセッションを短縮し、他科目では埋めない。
+     🎲おまかせミックス(cat=null)のみ全科目を母数とする。
+   優先順: 箱0(最大2/4問)→ 期日到来の復習 → 未出題 → 間口内の残りで補完
+   未解放の回の問題は候補に含めない(§5。unlockedQs で渡す)
+   「未出題」は boxes[id] が存在しないことで判定(0=直近誤答と明確に区別。v4.1 記録3)  */
+function buildSessionYoshu(unlockedQs, state, cat, today, rnd){
+  const boxes = state.boxes || {}, last = state.last || {};
+  const iv = INTERVALS.yoshu;
+
+  const UQS = unlockedQs.filter(q => !cat || q.cat === cat);   // 先に間口で絞り込む
+  const pool0=[], due1=[], due2=[], due3=[], unseen=[];
+  UQS.forEach(q => {
+    const box = boxes[q.id];
+    if(box === undefined) unseen.push(q);
+    else if(box === 0) pool0.push(q);
+    else if(box === 1 && isDueByLast(1, last[q.id], today, iv)) due1.push(q);
+    else if(box === 2 && isDueByLast(2, last[q.id], today, iv)) due2.push(q);
+    else if(box === 3 && isDueByLast(3, last[q.id], today, iv)) due3.push(q);
+  });
+
+  const revCap = cat ? 2 : 4;
+  const review = [
+    ...shuffle(pool0, rnd).slice(0, revCap),
+    ...shuffle(due1, rnd), ...shuffle(due2, rnd), ...shuffle(due3, rnd)
+  ].slice(0, REVIEW_SLOTS);
+
+  const revengeIds = new Set(pool0.map(q => q.id));
+  const usedIds = new Set(review.map(q => q.id));
+  const needed = Math.max(0, SESSION_SIZE - review.length);
+  const fill = shuffle(unseen.filter(q => !usedIds.has(q.id)), rnd).slice(0, needed);
+
+  let session = [...review, ...fill];
+  if(session.length < SESSION_SIZE){
+    /* 全問マスター済み等で足りない場合は、間口内の残り(期日前の問題)から補完 */
+    const usedAll = new Set(session.map(q => q.id));
+    session = [...session,
+      ...shuffle(UQS.filter(q => !usedAll.has(q.id)), rnd).slice(0, SESSION_SIZE - session.length)];
+  }
+
+  return shuffle(session, rnd)
+    .map(q => ({ ...q, _revenge: revengeIds.has(q.id) }));
+}
+
+/* 正誤確定時の箱遷移。正解→箱+1(上限3)、誤答→箱0 */
+function nextBox(curBox, ok, mode){
+  const base = curBox === undefined ? (mode === "fukushu" ? 2 : 0) : curBox;
+  return ok ? Math.min(base+1, 3) : 0;
+}
+
+
+/* ===== src/engine/validate.js ===== */
+/* =====================================================================
+   engine/validate.js — バンク/スキンのバリデーション
+   仕様: v4.1 §6(fukushu §7 を土台に科目分岐)/ yoshu §8
+   ・不合格は更新拒否+理由表示、現行バンク維持(全科目共通)
+   ===================================================================== */
+
+const YOSHU_REQUIRED_CATS = ["算数", "国語", "社会", "理科"];
+
+/* 起動時の構造チェック(内蔵バンク・localStorageキャッシュの読み込み用)。
+   §5 の空バンク bank_K を通すため questions は空配列を許容する
+   (おうちの人メニューからの投入では validateBankPaste が 1問以上を要求する) */
+function validateBankObj(b, subject){
+  if(!b || typeof b !== "object") return false;
+  if(b.subject !== subject) return false;
+  if(!Array.isArray(b.cats)) return false;
+  if(!Array.isArray(b.questions)) return false;
+  return b.questions.every(q =>
+    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0);
+}
+
+function validateSkinObj(s, kind){
+  if(!s || !s.colors || !Array.isArray(s.praise) || !Array.isArray(s.cheer)) return false;
+  if(!s.hintPraise) return false;                       // ヒント称賛文化(fukushu §3 必須要件)
+  if(kind === "boss"){
+    return !!(s.boss && s.boss.name && s.boss.emoji && s.boss.lines &&
+      s.boss.lines.appear && Array.isArray(s.boss.lines.damage) && s.boss.lines.damage.length > 0 &&
+      s.boss.lines.sealBreak && s.boss.lines.defeat && s.boss.lines.escape);
+  }
+  return !!(s.map && Array.isArray(s.map.nodes) && s.map.nodes.length > 0 && Array.isArray(s.titles));
+}
+
+/* ans規則の共通判定。テキスト解答は2表記以上が必要かどうかを返す
+   ・K(国語)は全問スキップ(v4.1 §5: 読み=ひらがな1種 / 書き=漢字1種)
+   ・Y は cat が「国語」の問題のみスキップ(yoshu §2 v1.1 の例外) */
+function ansNeedsTwoForms(q, subject){
+  if(isNumericQuestion(q)) return false;
+  if(subject === "K") return false;
+  if(subject === "Y" && q.cat === "国語") return false;
+  return true;
+}
+
+/* ---------- M/R/S/K(永続バンク) ---------- */
+function validateBankPasteFukushu(text, subject, existingIds){
+  let c;
+  try{ c = JSON.parse(text); }
+  catch(e){ return { ok:false, reason:"JSONとして読み取れませんでした。貼り付け内容を確認してください。" }; }
+
+  if(!c || typeof c !== "object") return { ok:false, reason:"バンクの形式が正しくありません。" };
+  if(c.subject !== subject){
+    return { ok:false, reason:`subjectが一致しません(この枠は "${subject}" 用です)。` };
+  }
+  if(!Array.isArray(c.questions) || c.questions.length === 0){
+    return { ok:false, reason:"questions配列が見つかりません(1問以上必要です)。" };
+  }
+  if(!Array.isArray(c.cats) || c.cats.length === 0){
+    return { ok:false, reason:"cats(間口の定義)がありません。" };
+  }
+
+  const catNames = new Set(c.cats.map(x => x && x.cat));
+  const idRe = new RegExp("^" + subject + "\\d{4}$");
+  const ids = [];
+  for(const q of c.questions){
+    if(!q || !q.id || !idRe.test(q.id)){
+      return { ok:false, reason:`不正なid形式があります: ${q && q.id}(${subject}+4桁の形式にしてください)` };
+    }
+    if(!q.cat) return { ok:false, reason:`catが未設定の問題があります(id: ${q.id})。` };
+    if(!catNames.has(q.cat)){
+      return { ok:false, reason:`catsに定義されていないcatがあります(id: ${q.id} / cat: ${q.cat})。` };
+    }
+    if(!Array.isArray(q.ans) || q.ans.length === 0){
+      return { ok:false, reason:`ansが未設定の問題があります(id: ${q.id})。` };
+    }
+    if(ansNeedsTwoForms(q, subject) && q.ans.length < 2){
+      return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。` };
+    }
+    ids.push(q.id);
+  }
+
+  const idSet = new Set(ids);
+  if(idSet.size !== ids.length) return { ok:false, reason:"idが重複しています。" };
+
+  /* id永続: 既存idの欠落は禁止(外したい場合は retired で残置) */
+  const missing = (existingIds || []).filter(id => !idSet.has(id));
+  if(missing.length){
+    return { ok:false, reason:`既存のidが欠落しています(削除は禁止・外したい場合はretiredで対応): ${missing.slice(0,5).join("、")}${missing.length>5?" 他":""}` };
+  }
+
+  /* 新規idは既存の続き番号 */
+  const numSuffix = id => parseInt(id.slice(subject.length), 10);
+  const existingMax = (existingIds || []).length ? Math.max(...existingIds.map(numSuffix)) : 0;
+  const badNew = ids.filter(id => !(existingIds || []).includes(id) && numSuffix(id) <= existingMax);
+  if(badNew.length){
+    return { ok:false, reason:`新規idは既存の続き番号にしてください(番号が既存以下のid: ${badNew.slice(0,5).join("、")})。` };
+  }
+
+  return { ok:true, bank:c };
+}
+
+/* ---------- Y(サイクル使い捨てバンク) ---------- */
+function validateBankPasteYoshu(text){
+  let c;
+  try{ c = JSON.parse(text); }
+  catch(e){ return { ok:false, reason:"JSONとして読み取れませんでした。貼り付け内容を確認してください。" }; }
+
+  if(!c || typeof c !== "object") return { ok:false, reason:"バンクの形式が正しくありません。" };
+  if(c.subject !== "Y"){
+    return { ok:false, reason:`subjectが一致しません(この枠は "Y"(4科統合)用です)。` };
+  }
+  if(!c.testDate || !/^\d{4}-\d{2}-\d{2}$/.test(c.testDate)){
+    return { ok:false, reason:"testDateがISO日付(YYYY-MM-DD形式)で設定されていません。" };
+  }
+  if(!Array.isArray(c.questions) || c.questions.length === 0){
+    return { ok:false, reason:"questions配列が見つかりません。" };
+  }
+  if(!Array.isArray(c.cats) || !YOSHU_REQUIRED_CATS.every(rc => c.cats.some(x => x && x.cat === rc))){
+    return { ok:false, reason:"catsに4科(算数・国語・社会・理科)すべてが定義されている必要があります。" };
+  }
+
+  const idRe = /^Y\d{4}$/;
+  const idSet = new Set();
+  for(const q of c.questions){
+    if(!q || !q.id || !idRe.test(q.id)){
+      return { ok:false, reason:`不正なid形式があります: ${q && q.id}(Y+4桁の形式にしてください)` };
+    }
+    if(idSet.has(q.id)) return { ok:false, reason:`idが重複しています: ${q.id}` };
+    idSet.add(q.id);
+    if(!q.cat || !YOSHU_REQUIRED_CATS.includes(q.cat)){
+      return { ok:false, reason:`catが4科(算数/国語/社会/理科)のいずれでもない問題があります(id: ${q.id})。` };
+    }
+    if(!Array.isArray(q.ans) || q.ans.length === 0){
+      return { ok:false, reason:`ansが未設定の問題があります(id: ${q.id})。` };
+    }
+    if(ansNeedsTwoForms(q, "Y") && q.ans.length < 2){
+      return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。国語の漢字問題のみ1種可。` };
+    }
+  }
+  /* サイクル使い捨てのため既存バンクとの連続性チェックは行わない(yoshu §8) */
+  return { ok:true, bank:c };
+}
+
+function validateBankPaste(text, subject, existingIds){
+  return subject === "Y"
+    ? validateBankPasteYoshu(text)
+    : validateBankPasteFukushu(text, subject, existingIds);
+}
+
+function validateSkinPaste(text, kind){
+  let c;
+  try{ c = JSON.parse(text); }
+  catch(e){ return { ok:false, reason:"JSONとして読み取れませんでした。貼り付け内容を確認してください。" }; }
+  if(!validateSkinObj(c, kind)){
+    return { ok:false, reason: kind === "boss"
+      ? "スキンの必須項目(boss.name/emoji/lines、colors、praise、cheer、hintPraise)が不足しています。"
+      : "スキンの必須項目(colors、praise、cheer、hintPraise、map.nodes、titles)が不足しています。" };
+  }
+  return { ok:true, skin:c };
+}
+
+
+/* ===== src/engine/storage.js ===== */
+/* =====================================================================
+   engine/storage.js — localStorage の可否判定と安全な読み書き
+   仕様: v4.1 §3 / §4.1(書き込み失敗時はバナー+セーブコード導線)
+   ===================================================================== */
+
+let storageAvailable = false;
+let storageWriteFailed = false;      // 一度でも書き込みに失敗したら true(常時バナーの根拠)
+
+function probeStorage(){
+  try{
+    localStorage.setItem("__quest_probe__", "1");
+    localStorage.removeItem("__quest_probe__");
+    storageAvailable = true;
+  }catch(e){
+    storageAvailable = false;
+  }
+  return storageAvailable;
+}
+
+function lsGetJSON(key){
+  if(!storageAvailable) return null;
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+
+function lsSetJSON(key, value){
+  if(!storageAvailable){ storageWriteFailed = true; return false; }
+  try{
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  }catch(e){
+    storageWriteFailed = true;      // 容量超過など
+    return false;
+  }
+}
+
+function lsRemove(key){
+  if(!storageAvailable) return;
+  try{ localStorage.removeItem(key); }catch(e){}
+}
+
+/* v4.1 §3 のキー */
+function keyState(subject){ return "quest_state_" + subject; }
+function keyBank(subject){ return "quest_bank_" + subject; }
+function keySkin(slot){ return "quest_skin_" + slot; }        // slot: M/R/S/K/BOSS
+const KEY_BOSS_LOG  = "quest_boss_log_Y";
+const KEY_UNLOCK    = "quest_unlock_Y";
+const KEY_LAST_VIEW = "quest_last_view";
+
+
+/* ===== src/engine/state.js ===== */
+/* =====================================================================
+   engine/state.js — 自動保存する進捗 state(v4.1 §4.2 / §4.3)
+   {
+     "v": 1, "bankVersion": "M_2026_07_02",
+     "boxes": {"M0001": 2}, "last": {"M0001": "2026-07-26"}, "xp": 123
+   }
+   ・boxes: キーが無いid = 未出題(復習=箱2初期扱い / 予習=未出題別管理)
+   ・last : その問題に最後に解答した日(期日計算に使用)
+   ===================================================================== */
+
+const STATE_VERSION = 1;
+
+function emptyState(bankVersion){
+  return { v: STATE_VERSION, bankVersion: bankVersion || "", boxes: {}, last: {}, xp: 0 };
+}
+
+function isValidState(s){
+  return !!(s && s.v === STATE_VERSION && s.boxes && typeof s.boxes === "object" &&
+            s.last && typeof s.last === "object" && typeof s.xp === "number");
+}
+
+/* §4.2 起動時の突合。バンクが成長していれば新規idは「未出題」として扱う。
+   未出題は boxes にキーが無い状態そのものなので、追加操作は不要
+   (復習側は参照時に箱2として解決する)。現バンクに存在しないidは持ち越さない。 */
+function reconcileState(state, bank){
+  const ids = new Set((bank.questions || []).map(q => q.id));
+  const boxes = {}, last = {};
+  Object.keys(state.boxes || {}).forEach(id => { if(ids.has(id)) boxes[id] = state.boxes[id]; });
+  Object.keys(state.last  || {}).forEach(id => { if(ids.has(id)) last[id]  = state.last[id]; });
+  return { v: STATE_VERSION, bankVersion: bank.bankVersion || "", boxes, last, xp: state.xp || 0 };
+}
+
+function loadState(subject, bank){
+  const raw = lsGetJSON(keyState(subject));
+  if(!isValidState(raw)) return emptyState(bank.bankVersion);
+  return reconcileState(raw, bank);
+}
+
+function saveState(subject, state){
+  return lsSetJSON(keyState(subject), state);
+}
+
+/* 解答確定時の state 更新(§4.1: これを呼んだ直後に saveState する) */
+function recordAnswer(state, q, ok, mode, today){
+  state.boxes[q.id] = nextBox(state.boxes[q.id], ok, mode);
+  state.last[q.id]  = dateKey(today || new Date());
+  if(ok) state.xp = Math.min((state.xp || 0) + 1, 4095);
+  return state;
+}
+
+/* §4.3: セーブコードから復元した場合のみ、全問の last を復元日で一括初期化する
+   (コードは日付を持たないため。従来挙動と同等) */
+function applyRestoredCode(state, parsed, bank, restoreDate){
+  const day = dateKey(restoreDate || new Date());
+  const last = {};
+  Object.keys(parsed.boxes).forEach(id => { last[id] = day; });
+  return {
+    v: STATE_VERSION,
+    bankVersion: bank.bankVersion || "",
+    boxes: { ...parsed.boxes },
+    last,
+    xp: parsed.xp || 0
+  };
+}
+
+
+/* ===== src/engine/adopt.js ===== */
+/* =====================================================================
+   engine/adopt.js — バンク・スキンの採用規則(v4.1 §3.1)
+   bankVersion の新旧比較(順序判定)は行わない。等値判定のみで決める。
+
+   localStorage の値の形: { data: <bank|skin>, builtinVersion: "<投入時点の内蔵version>" }
+
+   起動時:
+     1. 投入なし                                   → 内蔵を使用
+     2. 投入あり & 内蔵version == 記録されたversion → 投入を使用(再起動をまたいで有効)
+     3. 投入あり & 内蔵versionが記録と異なる        → 内蔵に切替+投入解除+トースト通知
+   例外: bank_Y の 3 は無条件に実行せず、§7.1 のサイクル交代確認フローへ回す
+   ===================================================================== */
+
+function readAdopted(storageKey){
+  const stored = lsGetJSON(storageKey);
+  if(!stored || typeof stored !== "object" || !stored.data) return null;
+  return stored;
+}
+
+function writeAdopted(storageKey, data, builtinVersion){
+  return lsSetJSON(storageKey, { data, builtinVersion });
+}
+
+function clearAdopted(storageKey){ lsRemove(storageKey); }
+
+/**
+ * @param storageKey  quest_bank_* / quest_skin_*
+ * @param builtin     内蔵リソース
+ * @param versionOf   リソース→version文字列
+ * @param isValid     リソース→boolean(壊れたキャッシュを弾く)
+ * @param deferSwitch true なら規則3を実行せず pendingSwitch を返す(bank_Y 用)
+ * @returns { value, source:"builtin"|"local", switched, pendingSwitch, warning }
+ */
+function adoptResource(storageKey, builtin, versionOf, isValid, deferSwitch){
+  const builtinVersion = versionOf(builtin);
+  const stored = readAdopted(storageKey);
+
+  if(!stored){
+    return { value: builtin, source: "builtin", switched: false, pendingSwitch: null, warning: null };
+  }
+  if(!isValid(stored.data)){
+    clearAdopted(storageKey);
+    return { value: builtin, source: "builtin", switched: false, pendingSwitch: null,
+             warning: "保存されていたデータが壊れていたため、内蔵版で起動しています。" };
+  }
+  if(stored.builtinVersion === builtinVersion){
+    return { value: stored.data, source: "local", switched: false, pendingSwitch: null, warning: null };
+  }
+  /* 内蔵が push で更新された */
+  if(deferSwitch){
+    return { value: stored.data, source: "local", switched: false, pendingSwitch: builtin, warning: null };
+  }
+  clearAdopted(storageKey);
+  return { value: builtin, source: "builtin", switched: true, pendingSwitch: null, warning: null };
+}
+
+
+/* ===== src/engine/boss.js ===== */
+/* =====================================================================
+   engine/boss.js — じゅんび(Y)固有の導出: HP・マスター率・封印・解放ゲート・討伐記録
+   仕様: yoshu §4(v1.2 部分点HP)/ §5(回単位の解放ゲート)
+   状態の二重管理をしない原則: HP・各種率は常に箱から導出する
+   ===================================================================== */
+
+const SEAL_THRESHOLD = 80;
+
+/* マスター率(封印解除・討伐判定用・厳密定義): 箱2以上のlive問題数 ÷ live問題数 × 100 */
+function masteredCount(qs, boxes){
+  return qs.filter(q => (boxes[q.id] ?? -1) >= 2).length;
+}
+function masteryPctOf(qs, boxes){
+  return qs.length ? Math.round(masteredCount(qs, boxes) / qs.length * 100) : 0;
+}
+
+/* 進捗率(HP用・部分点 v1.2): 箱2以上=1.0pt / 箱1=0.5pt / 箱0・未出題=0pt
+   v1.3: 母数は「解放済みの回」の問題のみ */
+function progressPct(qs, boxes){
+  if(!qs.length) return 0;
+  let pts = 0;
+  qs.forEach(q => {
+    const b = boxes[q.id] ?? -1;
+    if(b >= 2) pts += 1;
+    else if(b === 1) pts += 0.5;
+  });
+  return Math.round(pts / qs.length * 100);
+}
+
+function bossHP(qs, boxes){ return 100 - progressPct(qs, boxes); }
+
+/* ---------- 回単位の解放ゲート(yoshu §5) ----------
+   各科目の回はバンクの kai から自動検出。初期状態は各科目の最初の回のみ解放。
+   解放状態は localStorage に保存するが、消えても自己修復する:
+     ①各科目の最初の回は常に解放  ②箱に進捗がある回は解放済みとみなす            */
+function kaisOf(liveQs, cat){
+  return [...new Set(liveQs.filter(q => q.cat === cat).map(q => q.kai))].sort((a,b) => a-b);
+}
+
+function loadStoredUnlocks(){
+  const v = lsGetJSON(KEY_UNLOCK);
+  return Array.isArray(v) ? v : [];
+}
+function saveStoredUnlocks(list){ lsSetJSON(KEY_UNLOCK, list); }
+
+function unlockedKeys(liveQs, cats, boxes){
+  const set = new Set(loadStoredUnlocks());
+  cats.forEach(c => { const ks = kaisOf(liveQs, c.cat); if(ks.length) set.add(c.cat + ":" + ks[0]); });
+  liveQs.forEach(q => { if(boxes[q.id] !== undefined) set.add(q.cat + ":" + q.kai); });
+  return set;
+}
+function unlockedQsOf(liveQs, keys){ return liveQs.filter(q => keys.has(q.cat + ":" + q.kai)); }
+function allKaisUnlocked(liveQs, keys){ return liveQs.every(q => keys.has(q.cat + ":" + q.kai)); }
+
+function unlockKai(cat, kai){
+  const list = loadStoredUnlocks();
+  const k = cat + ":" + kai;
+  if(!list.includes(k)){ list.push(k); saveStoredUnlocks(list); }
+}
+function clearUnlocks(){ lsRemove(KEY_UNLOCK); }
+
+/* ---------- 討伐記録(quest_boss_log_Y) ----------
+   消えても被害なしのキャッシュ扱い。storage不可時はセッション内メモリで代替 */
+let bossLogMemory = [];
+
+function loadBossLog(){
+  const v = lsGetJSON(KEY_BOSS_LOG);
+  return Array.isArray(v) ? v : bossLogMemory;
+}
+
+function saveBossLogEntry(entry){
+  const log = loadBossLog();
+  log.push(entry);
+  bossLogMemory = log;
+  lsSetJSON(KEY_BOSS_LOG, log);
+}
+
+/* サイクル交代時の記録(yoshu §4 / v4.1 §7.1-2a)。
+   mastery は未解放の回も分母に含む全問題ベースの厳密値 */
+function buildBossLogEntry(skin, bank, liveQs, boxes){
+  const finalMastery = masteryPctOf(liveQs, boxes);
+  return {
+    bossName: (skin.boss && skin.boss.name) || "-",
+    emoji:    (skin.boss && skin.boss.emoji) || "",
+    testDate: bank.testDate || "-",
+    result:   finalMastery >= 100 ? "討伐" : "取り逃がし",
+    mastery:  finalMastery
+  };
+}
+
+
+/* ===== src/engine/titles.js ===== */
+/* =====================================================================
+   engine/titles.js — 称号判定とマップ計算
+   仕様: fukushu §3
+   ・称号condはエンジン実装済みの条件名のみ使用可
+     (noHintStreakN / hintCorrectN / revengeWin / perfectStage / totalCorrectN)
+   ・称号は永続化せず、セッション内スタッツ+累計xpで毎回判定(「今回獲得」表示)
+   ===================================================================== */
+
+function condMet(cond, stats, totalXp){
+  if(cond.startsWith("noHintStreak")) return stats.noHintMaxStreak >= parseInt(cond.replace("noHintStreak",""),10);
+  if(cond.startsWith("hintCorrect"))  return stats.hintCorrectCount >= parseInt(cond.replace("hintCorrect",""),10);
+  if(cond === "revengeWin")   return !!stats.revengeWin;
+  if(cond === "perfectStage") return !!stats.perfectStage;
+  if(cond.startsWith("totalCorrect")) return totalXp >= parseInt(cond.replace("totalCorrect",""),10);
+  return false;
+}
+
+function earnedTitles(skin, stats, totalXp){
+  return (skin.titles || []).filter(t => condMet(t.cond, stats, totalXp));
+}
+
+/* map.nodes は最大60。総正解数(xp)で現在地を算出 */
+function nodeIndexForXp(xp, map){
+  const nodes = map.nodes;
+  const step = map.stepPerCorrect || 1;
+  return Math.min(Math.floor(xp / step), nodes.length - 1);
+}
+
+
+/* ===== src/ui/shell.js ===== */
+/* =====================================================================
+   ui/shell.js — アプリ外枠: 最上位タブ・トースト・警告バナー・画面遷移
+   仕様: v4.1 §2(タブ・科目間で進捗/XP/演出世界は完全分離)
+   ===================================================================== */
+
+const app = document.getElementById("app");
+
+const FUKUSHU_SUBJECTS = ["M", "R", "S", "K"];
+const SUBJECT_LABEL = { M:"算数", R:"理科", S:"社会", K:"国語", Y:"じゅんび" };
+const SUBJECT_ICON  = { M:"🧮", R:"🔬", S:"🗾", K:"📖" };
+
+/* subject -> { subject, mode, bank, skin, bankSource, skinSource, state, allQs, liveQs, cats } */
+const WORLDS = {};
+
+let VIEW = { tab: "fukushu", subject: null };     // subject=null はふくしゅうの科目ドア画面
+let fallbackWarnings = [];
+let pendingCycleSwitch = null;                    // §7.1 起動時確認待ちの新bank_Y
+
+/* ---------- 世界(科目)ごとの派生 ---------- */
+function deriveWorld(w){
+  w.allQs  = [...(w.bank.questions || [])].sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  w.liveQs = w.allQs.filter(q => !q.retired);
+  w.cats   = (Array.isArray(w.bank.cats) ? w.bank.cats : []).filter(c => w.liveQs.some(q => q.cat === c.cat));
+  return w;
+}
+
+function worldOf(subject){ return WORLDS[subject]; }
+
+/* 国語ドアは bank_K が1問以上あるときのみ表示(§2) */
+function visibleFukushuSubjects(){
+  return FUKUSHU_SUBJECTS.filter(s => s !== "K" || (WORLDS.K && WORLDS.K.liveQs.length > 0));
+}
+
+/* ---------- スキン色をCSS変数へ反映(fukushu §3) ---------- */
+function applySkinColors(skin){
+  const r = document.documentElement.style, c = (skin && skin.colors) || {};
+  if(c.bg)     r.setProperty("--paper", c.bg);
+  if(c.ink)    r.setProperty("--ink", c.ink);
+  if(c.accent) r.setProperty("--orange", c.accent);
+  if(c.ok)     r.setProperty("--mint", c.ok);
+  if(c.ng)     r.setProperty("--coral", c.ng);
+  if(c.star)   r.setProperty("--star", c.star);
+}
+
+/* ---------- トースト ---------- */
+function showToast(text, onTap){
+  const el = document.getElementById("toast");
+  if(!el) return;
+  el.innerHTML = `<button class="toast-body" type="button">${esc(text)}</button>`;
+  el.classList.add("on");
+  const dismiss = () => { el.classList.remove("on"); el.innerHTML = ""; };
+  el.querySelector(".toast-body").addEventListener("click", () => {
+    dismiss();
+    if(onTap) onTap();
+  });
+  if(!onTap) setTimeout(dismiss, 6000);
+}
+
+/* ---------- 警告バナー(§4.1: 保存できない環境) ---------- */
+function bannerHtml(){
+  let html = "";
+  if(fallbackWarnings.length){
+    html += `<div class="warn-banner">⚠️ ${fallbackWarnings.map(esc).join("<br>")}</div>`;
+  }
+  if(!storageAvailable || storageWriteFailed){
+    html += `<div class="warn-banner save-banner">⚠️ 保存できない環境です。終わったらセーブコードをメモしてね
+      <button class="banner-link" id="bannerCodeBtn">🔑 セーブコードを出す</button></div>`;
+  }
+  return html;
+}
+
+function bindBanner(){
+  const b = document.getElementById("bannerCodeBtn");
+  if(b) b.addEventListener("click", () => renderSaveCodeScreen());
+}
+
+/* ---------- 最上位タブ ---------- */
+function tabsHtml(){
+  return `<div class="tabbar">
+    <button class="tab ${VIEW.tab==='junbi'?'on':''}" data-tab="junbi">👑 じゅんび</button>
+    <button class="tab ${VIEW.tab==='fukushu'?'on':''}" data-tab="fukushu">🗾 ふくしゅう</button>
+  </div>`;
+}
+
+function bindTabs(){
+  app.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+    const tab = b.dataset.tab;
+    if(tab === VIEW.tab) return;
+    flushAllStates();                       // §4.1 タブ切替でも書き込み
+    VIEW = { tab, subject: tab === "junbi" ? "Y" : null };
+    saveLastView();
+    renderCurrentView();
+  }));
+}
+
+/* ---------- 画面遷移 ---------- */
+function saveLastView(){ lsSetJSON(KEY_LAST_VIEW, VIEW); }
+
+function loadLastView(){
+  const v = lsGetJSON(KEY_LAST_VIEW);
+  if(!v || (v.tab !== "junbi" && v.tab !== "fukushu")) return { tab:"fukushu", subject:null };
+  if(v.tab === "junbi") return { tab:"junbi", subject:"Y" };
+  const sub = v.subject && visibleFukushuSubjects().includes(v.subject) ? v.subject : null;
+  return { tab:"fukushu", subject: sub };
+}
+
+function renderCurrentView(){
+  if(VIEW.tab === "junbi"){
+    applySkinColors(WORLDS.Y.skin);
+    renderBossHome();
+  } else if(VIEW.subject){
+    applySkinColors(WORLDS[VIEW.subject].skin);
+    renderSubjectHome(VIEW.subject);
+  } else {
+    applySkinColors(WORLDS.M.skin);
+    renderSubjectDoors();
+  }
+}
+
+/* 全科目の state を書き出す(§4.1 セッション終了・タブ切替・visibilitychange) */
+function flushAllStates(){
+  Object.keys(WORLDS).forEach(s => { saveState(s, WORLDS[s].state); });
+}
+
+
+/* ===== src/ui/quiz.js ===== */
+/* =====================================================================
+   ui/quiz.js — 出題〜判定〜結果(ふくしゅう/じゅんび 共通)
+   維持項目(fukushu §8): 段階ヒント2段階 / 誤答時即解説 / 見直しコーナー /
+                        writeTip固定表示 / 記録・通信なし
+   v4.1 記録2(承認済): セーブコードは結果画面に表示しない(おうちの人メニューへ)
+   ===================================================================== */
+
+let quiz = null;
+
+/* ctx: { world, mode, buildSession, topbarHtml, initExtra, onAnswer, resultWorldHtml, goHome } */
+function startQuiz(ctx, cat){
+  const w = ctx.world;
+  const qs = ctx.buildSession(w, cat, new Date());
+  if(!qs.length){
+    showToast("いま出せる問題がないみたい。ほかの間口をえらんでね。");
+    ctx.goHome();
+    return;
+  }
+  quiz = {
+    ctx, cat: cat || null, qs, idx:0, input:"", hint:0, answered:false,
+    results:[], combo:0, best:0,
+    noHintStreak:0, noHintMaxStreak:0, hintCorrectCount:0, revengeWin:false,
+    extra: ctx.initExtra ? ctx.initExtra(w) : {}
+  };
+  renderQ();
+}
+
+function renderQ(){
+  const s = quiz, w = s.ctx.world, q = s.qs[s.idx];
+  s.numeric = isNumericQuestion(q);
+  const rail = s.qs.map((_, i) => {
+    if(i < s.results.length) return `<span class="${s.results[i].ok?'on':'ng'}">${s.results[i].ok?'⭐':'💧'}</span>`;
+    return `<span>⭐</span>`;
+  }).join("");
+  const catInfo = (w.cats || []).find(c => c.cat === q.cat);
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    <div class="topbar">
+      <button class="quit-btn" id="quit">← やめる</button>
+      ${s.ctx.topbarHtml(w)}
+      <div class="combo">${s.combo>=2?`🔥${s.combo}れんぞく!`:""}</div>
+    </div>
+    <div class="rail">${rail}</div>
+    <div class="qcard">
+      ${q._revenge ? `<div class="revenge-badge">🔥 リベンジ問題!</div>` : ""}
+      <div class="qnum">${catInfo?esc(catInfo.icon||""):""} ${esc(q.cat||"")} ・ だい ${s.idx+1} もん / ${s.qs.length}もん</div>
+      <div class="qtext">${esc(q.q)}</div>
+      <div class="answer-row">
+        ${s.numeric
+          ? `<input type="text" class="answer-box" id="ansbox" inputmode="none" autocomplete="off" enterkeyhint="done">`
+          : `<input type="text" class="answer-box answer-input" id="ansbox" placeholder="かんじ・かなで にゅうりょく" autocomplete="off" autocapitalize="off" enterkeyhint="done">`}
+        <div class="unit">${esc(q.unit_label || "")}</div>
+      </div>
+      <div class="write-tip">✏️ ${esc(w.skin.writeTip || "まずノートに式を書こう。それが「さいしょの一手」!")}</div>
+      <div class="hint-area" id="hintarea">
+        <button class="hint-btn" id="hintbtn">💡 ヒントを見る</button>
+      </div>
+      <div id="fbarea"></div>
+    </div>
+    ${s.numeric ? `<div class="keypad" id="pad"></div>` : `<button class="next-btn submit-btn" id="submitBtn" disabled>こたえあわせ</button>`}`;
+
+  bindBanner();
+  document.getElementById("quit").addEventListener("click", () => { quiz = null; s.ctx.goHome(); });
+  document.getElementById("hintbtn").addEventListener("click", showHint);
+
+  /* 数字・テキスト共通: 物理キーボード(PC)から直接入力できるようにinputを購読 */
+  const input = document.getElementById("ansbox");
+  input.addEventListener("input", () => { quiz.input = input.value; updateAns(); });
+  input.addEventListener("keydown", e => {
+    if(e.key === "Enter" && quiz.input && quiz.input.trim() && !quiz.answered) check();
+  });
+
+  if(s.numeric){ renderPad(); updateAns(); }
+  else { document.getElementById("submitBtn").addEventListener("click", check); input.focus(); }
+}
+
+function renderPad(){
+  const pad = document.getElementById("pad");
+  const keys = ["7","8","9","⌫","4","5","6","/","1","2","3",".","0"];
+  pad.innerHTML = keys.map(k => `<button class="key ${["⌫","/","."].includes(k)?"fn":""}" data-k="${k}">${k}</button>`).join("")
+    + `<button class="key go" id="gobtn">こたえあわせ</button>`;
+  pad.querySelectorAll(".key[data-k]").forEach(b => b.addEventListener("click", () => tapKey(b.dataset.k)));
+  document.getElementById("gobtn").addEventListener("click", check);
+}
+
+/* キーパッドのタップは実際の<input>の値を書き換える(PCからの直接タイプと同じ経路に統一) */
+function tapKey(k){
+  if(quiz.answered) return;
+  const input = document.getElementById("ansbox");
+  if(k === "⌫") input.value = input.value.slice(0,-1);
+  else if(input.value.length < 8) input.value += k;
+  quiz.input = input.value;
+  updateAns();
+}
+
+function updateAns(){
+  const box = document.getElementById("ansbox");
+  if(!box) return;
+  box.classList.toggle("filled", !!quiz.input);
+  box.disabled = quiz.answered;
+  if(quiz.numeric){
+    const go = document.getElementById("gobtn");
+    if(go) go.disabled = !quiz.input || quiz.answered;
+  } else {
+    const btn = document.getElementById("submitBtn");
+    if(btn) btn.disabled = !quiz.input || !quiz.input.trim() || quiz.answered;
+  }
+}
+
+function showHint(){
+  const q = quiz.qs[quiz.idx];
+  const area = document.getElementById("hintarea");
+  quiz.hint++;
+  const bubbles = [];
+  if(quiz.hint >= 1) bubbles.push(`<div class="hint-bubble">💡 <b>考え方</b>: ${esc(q.h1)}</div>`);
+  if(quiz.hint >= 2) bubbles.push(`<div class="hint-bubble">🧮 <b>式</b>: ${esc(q.h2)}</div>`);
+  const btnLabel = quiz.hint === 1 ? "💡 もうひとつヒント(式)" : "";
+  area.innerHTML = bubbles.join("") + (btnLabel ? `<div style="margin-top:8px"><button class="hint-btn" id="hintbtn">${btnLabel}</button></div>` : "");
+  const nb = document.getElementById("hintbtn");
+  if(nb) nb.addEventListener("click", showHint);
+}
+
+function check(){
+  const s = quiz, w = s.ctx.world, q = s.qs[s.idx];
+  if(s.answered || !s.input) return;
+  s.answered = true;
+
+  const ok = answerMatches(q, s.input);
+  s.results.push({ q, ok, my: s.input, hintUsed: s.hint });
+
+  /* 世界別の前後比較(封印解除の検出など)は onAnswer に委ねる */
+  const hook = s.ctx.onAnswer ? s.ctx.onAnswer(w, q, ok, s, "before") : null;
+
+  /* §4.1: 解答確定ごとに state を全量書き込み */
+  recordAnswer(w.state, q, ok, s.ctx.mode, new Date());
+  saveState(w.subject, w.state);
+
+  const after = s.ctx.onAnswer ? s.ctx.onAnswer(w, q, ok, s, "after", hook) : { banners: "" };
+
+  if(ok){
+    s.combo++; s.best = Math.max(s.best, s.combo);
+    if(s.hint === 0){ s.noHintStreak++; s.noHintMaxStreak = Math.max(s.noHintMaxStreak, s.noHintStreak); }
+    else { s.noHintStreak = 0; s.hintCorrectCount++; }
+    if(q._revenge) s.revengeWin = true;
+  } else {
+    s.combo = 0; s.noHintStreak = 0;
+  }
+
+  const fb = document.getElementById("fbarea");
+  const last = s.idx === s.qs.length - 1;
+  if(ok){
+    fb.innerHTML = `<div class="fb ok">
+      <div class="fb-head">${(after && after.okHead) || "⭕ せいかい!"} ${esc(pick(w.skin.praise))}</div>
+      ${(after && after.banners) || ""}
+      ${s.hint === 0 ? "ノーヒントはえらい!" : esc(w.skin.hintPraise)}
+      <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
+  } else {
+    fb.innerHTML = `<div class="fb ng"><div class="fb-head">❌ ざんねん…</div>
+      正解は <b>${esc(q.ans[0])}${esc(q.unit_label||"")}</b>。<br>📖 ${esc(q.exp)}<br>${esc(pick(w.skin.cheer))}
+      <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
+  }
+  updateAns();
+  document.getElementById("next").addEventListener("click", () => {
+    if(last) renderResult();
+    else { s.idx++; s.input=""; s.hint=0; s.answered=false; renderQ(); }
+  });
+  fb.scrollIntoView({ behavior:"smooth", block:"end" });
+}
+
+function renderResult(){
+  const s = quiz, w = s.ctx.world;
+  const nOK = s.results.filter(r => r.ok).length, n = s.results.length;
+  const stars = nOK===n ? 3 : nOK>=n-2 ? 2 : nOK>=Math.ceil(n/2) ? 1 : 0;
+  const emoji = stars===3?"🏆":stars===2?"🎉":stars===1?"💪":"🌱";
+  const title = stars===3?"パーフェクト!!":stars===2?"あと少しで満点!":stars===1?"いいペース!":"ここからスタート!";
+  const misses = s.results.filter(r => !r.ok);
+  s.perfectStage = (nOK === n);
+
+  const stats = {
+    noHintMaxStreak: s.noHintMaxStreak,
+    hintCorrectCount: s.hintCorrectCount,
+    revengeWin: s.revengeWin,
+    perfectStage: s.perfectStage
+  };
+  const earned = earnedTitles(w.skin, stats, w.state.xp);
+
+  flushAllStates();                                  // §4.1 セッション終了時の書き込み
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    <div class="res-head"><div class="res-emoji">${emoji}</div><div class="res-title">${title}</div></div>
+    <div class="res-score"><b>${nOK}</b> / ${n} もん せいかい</div>
+    <div class="res-stars">${"🌟".repeat(stars)}${"☆".repeat(3-stars)}</div>
+    ${s.best>=3?`<div class="res-score" style="font-size:15px">🔥 さいだい ${s.best}れんぞく正解!</div>`:""}
+
+    ${s.ctx.resultWorldHtml ? s.ctx.resultWorldHtml(w, s) : ""}
+
+    ${earned.length ? `<div class="title-wrap">${earned.map(t=>`<span class="title-badge">🏅 ${esc(t.name)}</span>`).join("")}</div>` : ""}
+
+    ${misses.length?`<div class="review-head">📖 見直しコーナー(ノートで解き直そう)</div>`:""}
+    ${misses.map(r=>`<div class="review">
+        <div class="rq">Q. ${esc(r.q.q)}</div>
+        <div class="ra"><span class="miss">きみの答え: ${esc(r.my)}</span> → 正解: <b>${esc(r.q.ans[0])}${esc(r.q.unit_label||"")}</b><br>${esc(r.q.exp)}</div>
+      </div>`).join("")}
+    <div class="res-btns">
+      <button class="retry" id="retry">もう一回 🔁</button>
+      <button class="gohome" id="home">ホームへ</button>
+    </div>`;
+  bindBanner();
+  document.getElementById("retry").addEventListener("click", () => startQuiz(s.ctx, s.cat));
+  document.getElementById("home").addEventListener("click", () => { quiz = null; s.ctx.goHome(); });
+}
+
+
+/* ===== src/ui/fukushu.js ===== */
+/* =====================================================================
+   ui/fukushu.js — 🗾ふくしゅうタブ: 科目ドア → 科目ホーム(旅マップ+間口)
+   仕様: fukushu §4 / §8-6(マップ画面)、v4.1 §2(各科目は自科目スキンのみ参照)
+   ===================================================================== */
+
+function renderSubjectDoors(){
+  quiz = null;
+  VIEW = { tab:"fukushu", subject:null };
+  saveLastView();
+  const subs = visibleFukushuSubjects();
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    ${tabsHtml()}
+    <div class="home-title">🗾 ふくしゅうクエスト</div>
+    <div class="home-sub">きょうは どの教科にする?</div>
+    ${subs.map(s => {
+      const w = WORLDS[s];
+      const idx = nodeIndexForXp(w.state.xp, w.skin.map);
+      const node = w.skin.map.nodes[idx];
+      return `<button class="stage-btn door" data-sub="${s}">
+        <div class="stage-name">${SUBJECT_ICON[s]} ${SUBJECT_LABEL[s]}</div>
+        <div class="stage-desc">${esc(w.skin.title || "")}</div>
+        <div class="door-here">いま: ${esc(node.emoji)} ${esc(node.name)}(${idx}/${w.skin.map.nodes.length-1})</div>
+      </button>`;
+    }).join("")}
+    <div class="home-note">きろくは この端末に自動でほぞんされるよ。</div>
+    <div class="parent-menu-row"><button class="parent-menu-btn" id="parentMenuBtn">⚙️ おうちの人メニュー</button></div>`;
+
+  bindBanner();
+  bindTabs();
+  app.querySelectorAll(".door").forEach(b => b.addEventListener("click", () => {
+    VIEW = { tab:"fukushu", subject:b.dataset.sub };
+    saveLastView();
+    applySkinColors(WORLDS[b.dataset.sub].skin);
+    renderSubjectHome(b.dataset.sub);
+  }));
+  document.getElementById("parentMenuBtn").addEventListener("click", () => renderParentMenu());
+}
+
+function renderSubjectHome(subject){
+  quiz = null;
+  VIEW = { tab:"fukushu", subject };
+  saveLastView();
+  const w = WORLDS[subject];
+  const map = w.skin.map;
+  const idx = nodeIndexForXp(w.state.xp, map);
+  const nodes = map.nodes;
+  const node = nodes[idx];
+  const atGoal = idx >= nodes.length - 1;
+  const pct = Math.round((idx/(nodes.length-1))*100);
+  const nextNode = nodes[Math.min(idx+1, nodes.length-1)];
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    ${tabsHtml()}
+    <div class="topbar"><button class="quit-btn" id="backDoors">← 教科をえらぶ</button></div>
+    <div class="home-title">${SUBJECT_ICON[subject]} ${esc(w.skin.title || SUBJECT_LABEL[subject])}</div>
+    <div class="home-sub">1かい 8もん。ヒントを使ってもOK!<br>${esc(w.skin.writeTip || "ノートに書いてから答えるのがルールだよ ✏️")}</div>
+
+    <div class="map-card">
+      <div class="map-label">いま、たびの場所</div>
+      <div class="map-here"><div class="map-emoji">${esc(node.emoji)}</div><div class="map-name">${esc(node.name)}</div></div>
+      <div class="map-progress-wrap">
+        <div class="map-bar-track"><div class="map-bar-fill" style="width:${pct}%"></div></div>
+        <div class="map-progress-text"><span>${atGoal ? "🎉 ゴールにとうちゃく!" : `つぎは ${esc(nextNode.emoji)} ${esc(nextNode.name)}`}</span><span>${idx}/${nodes.length-1}</span></div>
+      </div>
+      ${atGoal ? `<div class="map-goal">${esc(map.goalMessage||"")}</div>` : ""}
+    </div>
+
+    <div class="doors-label">きょうは どれにする?</div>
+    ${w.cats.map(c => `<button class="stage-btn" data-cat="${esc(c.cat)}">
+        <div class="stage-name">${esc(c.icon||"⭐")} ${esc(c.cat)}</div>
+        <div class="stage-desc">${esc(c.desc||"")}</div>
+      </button>`).join("")}
+    <button class="stage-btn omakase" data-cat="">
+      <div class="stage-name">🎲 おまかせミックス</div>
+      <div class="stage-desc">復習もぜんぶまぜて8問。まよったらこれ!</div>
+    </button>
+
+    <div class="home-note">きろくは この端末に自動でほぞんされるよ。</div>
+    <div class="parent-menu-row"><button class="parent-menu-btn" id="parentMenuBtn">⚙️ おうちの人メニュー</button></div>`;
+
+  bindBanner();
+  bindTabs();
+  document.getElementById("backDoors").addEventListener("click", () => renderSubjectDoors());
+  app.querySelectorAll(".stage-btn[data-cat]").forEach(b =>
+    b.addEventListener("click", () => startQuiz(fukushuCtx(subject), b.dataset.cat || null)));
+  document.getElementById("parentMenuBtn").addEventListener("click", () => renderParentMenu());
+}
+
+/* ---------- クイズ用コンテキスト ---------- */
+function fukushuCtx(subject){
+  const w = WORLDS[subject];
+  return {
+    world: w,
+    mode: "fukushu",
+    buildSession: (world, cat, today) => buildSessionFukushu(world.liveQs, world.state, cat, today),
+    topbarHtml: (world) => {
+      const map = world.skin.map;
+      const i = nodeIndexForXp(world.state.xp, map);
+      const pct = Math.round((i/(map.nodes.length-1))*100);
+      return `<div class="journey-mini">
+        <span class="em">${esc(map.nodes[i].emoji)}</span>
+        <div class="journey-mini-track"><div class="journey-mini-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    },
+    initExtra: (world) => ({ startNodeIdx: nodeIndexForXp(world.state.xp, world.skin.map) }),
+    onAnswer: (world, q, ok, s, phase) => phase === "after" ? { banners:"", okHead:"⭕ せいかい!" } : null,
+    resultWorldHtml: (world, s) => {
+      const nodes = world.skin.map.nodes;
+      const newIdx = nodeIndexForXp(world.state.xp, world.skin.map);
+      const startIdx = s.extra.startNodeIdx;
+      const moved = newIdx - startIdx;
+      const atGoal = newIdx >= nodes.length - 1;
+      return `<div class="journey-card">
+        <div class="journey-move">${moved>0?`${moved}歩 すすんだ!`:"今回はたびの歩数なし。また次回!"}</div>
+        <div class="journey-nodes">
+          <span>${esc(nodes[startIdx].emoji)}</span>
+          ${moved>0?`<span class="journey-arrow">→</span><span>${esc(nodes[newIdx].emoji)}</span>`:""}
+        </div>
+        <div class="journey-newname">いま: ${esc(nodes[newIdx].name)}${atGoal?" 🎉":""}</div>
+        ${atGoal ? `<div class="map-goal" style="margin-top:8px">${esc(world.skin.map.goalMessage||"")}</div>` : ""}
+      </div>`;
+    },
+    goHome: () => renderSubjectHome(subject)
+  };
+}
+
+
+/* ===== src/ui/junbi.js ===== */
+/* =====================================================================
+   ui/junbi.js — 👑じゅんびタブ: ボスバトル画面・封印・回チップ・討伐記録
+   仕様: yoshu §4 / §5 / v4.1 §7.1(サイクル交代確認フロー)
+   ===================================================================== */
+
+let bossOneshotLine = null;      // 回解放・新ボス登場など、1回だけ表示する台詞
+
+function yWorld(){ return WORLDS.Y; }
+function yKeys(){ const w = yWorld(); return unlockedKeys(w.liveQs, w.cats, w.state.boxes); }
+function yUnlockedQs(){ const w = yWorld(); return unlockedQsOf(w.liveQs, yKeys()); }
+function ySubjectMastery(cat){
+  const w = yWorld();
+  return masteryPctOf(yUnlockedQs().filter(q => q.cat === cat), w.state.boxes);
+}
+function yOverallMastery(){ return masteryPctOf(yUnlockedQs(), yWorld().state.boxes); }
+function yHP(){ return bossHP(yUnlockedQs(), yWorld().state.boxes); }
+function ySealBroken(cat){ return ySubjectMastery(cat) >= SEAL_THRESHOLD; }
+function yAllSealsBroken(){ const w = yWorld(); return w.cats.length>0 && w.cats.every(c => ySealBroken(c.cat)); }
+
+function renderBossHome(msg){
+  quiz = null;
+  VIEW = { tab:"junbi", subject:"Y" };
+  saveLastView();
+  const w = yWorld();
+  const hp = yHP();
+  const boss = w.skin.boss || {};
+  const keys = yKeys();
+  const allOpen = allKaisUnlocked(w.liveQs, keys);
+  const defeated = hp <= 0 && allOpen;            // 全回解放済みのときだけ討伐(yoshu §4)
+  const sealedPower = hp <= 0 && !allOpen;
+  const enraged = yAllSealsBroken() && !defeated;
+  const flavorText = defeated ? ((boss.lines && boss.lines.defeat) || "")
+    : bossOneshotLine ? bossOneshotLine
+    : sealedPower ? "……ふっ、われにはまだ封印された力が残っておるぞ?(習ったら次の回を解放しよう)"
+    : (boss.flavor || "");
+  bossOneshotLine = null;
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    ${tabsHtml()}
+    <div class="home-title">⚔️ ${esc(w.skin.title || "テストじゅんびクエスト")}</div>
+    <div class="home-sub">1かい 8もん。ヒントを使ってもOK!<br>${esc(w.skin.writeTip || "まずノートに式を書こう。それが「さいしょの一手」!")}</div>
+
+    <div class="boss-card ${defeated?'defeated':''} ${enraged?'enraged':''}">
+      <div class="boss-emoji-big">${defeated ? "🏆" : esc(boss.emoji||"👑")}</div>
+      <div class="boss-name">${esc(boss.name||"")}</div>
+      <div class="boss-flavor">${esc(flavorText)}</div>
+      <div class="hp-label">HP</div>
+      <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${Math.max(hp,0)}%"></div></div>
+      <div class="hp-text">${Math.max(hp,0)} / 100</div>
+    </div>
+
+    <div class="seals-row">
+      ${w.cats.map(c => {
+        const pct = ySubjectMastery(c.cat);
+        const broken = pct >= SEAL_THRESHOLD;
+        return `<div class="seal-item ${broken?'unlocked':'locked'}">
+          <div class="seal-icon">${broken?"🔓":"🔒"} ${esc(c.icon||"")}</div>
+          <div class="seal-name">${esc(c.cat)}</div>
+          <div class="seal-bar-track"><div class="seal-bar-fill" style="width:${pct}%"></div></div>
+          <div class="seal-pct">${pct}%</div>
+        </div>`;
+      }).join("")}
+    </div>
+
+    ${msg ? `<div class="code-msg ${msg.ok?'ok':'ng'}">${esc(msg.text)}</div>` : ""}
+
+    <div class="doors-label">きょうは どれにする?</div>
+    ${w.cats.map(c => {
+      const ks = kaisOf(w.liveQs, c.cat);
+      const chips = ks.length < 2 ? "" : `<div class="kai-row">${ks.map(k => {
+        const on = keys.has(c.cat + ":" + k);
+        return `<button class="kai-chip ${on?'on':'off'}" data-cat="${esc(c.cat)}" data-kai="${k}" ${on?"disabled":""}>${on?"✅":"🔒"} 回${k}</button>`;
+      }).join("")}</div>`;
+      return `<div class="stage-group">
+        <button class="stage-btn" data-cat="${esc(c.cat)}">
+          <div class="stage-name">${esc(c.icon||"⭐")} ${esc(c.cat)}</div>
+          <div class="stage-desc">${esc(c.desc||"")}</div>
+        </button>${chips}</div>`;
+    }).join("")}
+    <button class="stage-btn omakase" data-cat="">
+      <div class="stage-name">🎲 おまかせミックス</div>
+      <div class="stage-desc">4科ぜんぶまぜて8問。まよったらこれ!</div>
+    </button>
+
+    <div class="home-note">きろくは この端末に自動でほぞんされるよ。</div>
+    <div class="parent-menu-row">
+      <button class="parent-menu-btn" id="logBtn">📜 討伐のきろく</button>
+      <button class="parent-menu-btn" id="parentMenuBtn">⚙️ おうちの人メニュー</button>
+    </div>`;
+
+  bindBanner();
+  bindTabs();
+  app.querySelectorAll(".stage-btn[data-cat]").forEach(b =>
+    b.addEventListener("click", () => startQuiz(junbiCtx(), b.dataset.cat || null)));
+
+  /* 誤タップ防止の2段階解放(1回目=確認、2回目=解放) */
+  let armedChip = null;
+  app.querySelectorAll(".kai-chip.off").forEach(ch => ch.addEventListener("click", ev => {
+    ev.stopPropagation();
+    const key = ch.dataset.cat + ":" + ch.dataset.kai;
+    if(armedChip !== key){
+      armedChip = key;
+      ch.textContent = "🗝️ 習ったら もういちどタップ!";
+      return;
+    }
+    unlockKai(ch.dataset.cat, Number(ch.dataset.kai));
+    bossOneshotLine = (yWorld().skin.boss && yWorld().skin.boss.lines && yWorld().skin.boss.lines.powerUp)
+      || "ふはは! 新しい範囲を引きつれて、われはパワーアップしたぞ!(HPがふえた!)";
+    renderBossHome();
+  }));
+  document.getElementById("logBtn").addEventListener("click", () => renderBossLog());
+  document.getElementById("parentMenuBtn").addEventListener("click", () => renderParentMenu());
+}
+
+/* ---------- 討伐のきろく ---------- */
+function renderBossLog(){
+  quiz = null;
+  const log = loadBossLog();
+  app.innerHTML = `
+    ${bannerHtml()}
+    <div class="topbar"><button class="quit-btn" id="back">← ホームへ</button></div>
+    <div class="home-title" style="font-size:22px">📜 討伐のきろく</div>
+    <div class="home-sub">ボスが交代するたびに、ここに記録が残るよ。</div>
+    ${log.length===0 ? `<div class="review"><div class="ra">まだきろくがないよ。テストの日が来て次のボスに交代すると、ここに記録されるよ。</div></div>` : ""}
+    ${[...log].reverse().map(e => `
+      <div class="review">
+        <div class="rq">${esc(e.emoji||"")} ${esc(e.bossName||"-")}
+          <span class="log-badge ${e.result==='討伐'?'gold':'silver'}">${e.result==='討伐'?'🥇 討伐':'🥈 取り逃がし'}</span>
+        </div>
+        <div class="ra">テスト日: ${esc(e.testDate||"-")} / さいしゅうマスター率: ${e.mastery}%</div>
+      </div>`).join("")}
+    <button class="reset-bank-btn" id="back2">← ホームへ</button>`;
+  bindBanner();
+  document.getElementById("back").addEventListener("click", () => renderBossHome());
+  document.getElementById("back2").addEventListener("click", () => renderBossHome());
+}
+
+/* ---------- サイクル交代(v4.1 §7.1) ----------
+   push経由(起動時検出)・おうちの人メニュー経由のどちらも必ずこの1本を通す(記録漏れ防止) */
+function proceedCycleSwitch(newBank){
+  const w = yWorld();
+  /* (a) 討伐記録を追記。mastery は未解放の回も分母に含む全問題ベース(yoshu §4) */
+  saveBossLogEntry(buildBossLogEntry(w.skin, w.bank, w.liveQs, w.state.boxes));
+  /* (b) 進捗と解放状態をリセット */
+  w.bank = newBank;
+  deriveWorld(w);
+  w.state = emptyState(newBank.bankVersion);
+  saveState("Y", w.state);
+  clearUnlocks();
+  /* (c) 新バンクを採用し、現在有効な bank_Y を quest_bank_Y にミラー(§7.1 実装要件) */
+  mirrorYBank(newBank);
+  const boss = w.skin.boss || {};
+  bossOneshotLine = (boss.lines && boss.lines.appear) || "あらたなボスが あらわれた!";
+}
+
+/* 現在有効な bank_Y を常にミラーしておく(拒否時に旧バンクで継続するため) */
+function mirrorYBank(bank){
+  writeAdopted(keyBank("Y"), bank, BUILTIN_BANKS.Y.bankVersion);
+  WORLDS.Y.bankSource = bank.bankVersion === BUILTIN_BANKS.Y.bankVersion ? "builtin" : "local";
+}
+
+function renderCycleSwitchConfirm(newBank, origin){
+  quiz = null;
+  const w = yWorld();
+  const bossName = (w.skin.boss && w.skin.boss.name) || "-";
+  const oldMastery = masteryPctOf(w.liveQs, w.state.boxes);
+
+  app.innerHTML = `
+    <div class="home-title" style="font-size:22px">⚠️ 新しいボスが あらわれた!</div>
+    <div class="confirm-card">
+      <p>いまのボス「<b>${esc(bossName)}</b>」との勝負を終わりにして、新しいボスに挑む?</p>
+      <p style="margin-top:10px;">いまの進捗(マスター率 <b>${oldMastery}%</b>)はリセットされるよ。討伐のきろくには自動で記録されます。</p>
+      <p style="margin-top:10px;">新しいバンク: <b>${esc(newBank.bankVersion||"-")}</b>(テスト日: ${esc(newBank.testDate||"-")})</p>
+      <div class="confirm-btns">
+        <button class="code-btn" id="confirmYes">うん、挑む!</button>
+        <button class="reset-bank-btn" id="confirmNo" style="margin-top:0;">まだ やめておく</button>
+      </div>
+    </div>`;
+
+  document.getElementById("confirmYes").addEventListener("click", () => {
+    proceedCycleSwitch(newBank);
+    pendingCycleSwitch = null;
+    if(origin === "menu") renderParentMenu({ target:"bank", subject:"Y", ok:true, text:"✅ 新しいボスに交代しました!(討伐のきろくに記録済み)" });
+    else { VIEW = { tab:"junbi", subject:"Y" }; saveLastView(); renderBossHome(); }
+  });
+  document.getElementById("confirmNo").addEventListener("click", () => {
+    /* 拒否: 現行バンクで継続。記録は書き換えないので次回起動時に再度確認される(§7.1-3) */
+    pendingCycleSwitch = null;
+    if(origin === "menu") renderParentMenu({ target:"bank", subject:"Y", ok:false, text:"交代をキャンセルしました。" });
+    else { VIEW = { tab:"junbi", subject:"Y" }; saveLastView(); renderBossHome(); }
+  });
+}
+
+/* ---------- クイズ用コンテキスト ---------- */
+function junbiCtx(){
+  return {
+    world: yWorld(),
+    mode: "yoshu",
+    buildSession: (world, cat, today) => buildSessionYoshu(yUnlockedQs(), world.state, cat, today),
+    topbarHtml: (world) => {
+      const hp = yHP();
+      const emoji = (world.skin.boss && world.skin.boss.emoji) || "👑";
+      return `<div class="hp-mini">
+        <span class="em">${esc(emoji)}</span>
+        <div class="hp-mini-track"><div class="hp-mini-fill" style="width:${Math.max(hp,0)}%"></div></div>
+      </div>`;
+    },
+    initExtra: () => {
+      const start = {};
+      yWorld().cats.forEach(c => { start[c.cat] = ySubjectMastery(c.cat); });
+      return { startOverallMastery: yOverallMastery(), startSubjMastery: start, sealBreaks: [] };
+    },
+    onAnswer: (world, q, ok, s, phase, pre) => {
+      if(phase === "before") return { preSubjPct: ySubjectMastery(q.cat) };
+      const postSubjPct = ySubjectMastery(q.cat);
+      const boss = world.skin.boss || {};
+      let banners = "";
+      if(!ok) return { banners:"", okHead:"⚔️ ヒット!" };
+
+      const dmgLine = pick((boss.lines && boss.lines.damage) || []);
+      if(dmgLine) banners += `<div class="boss-react">${esc(boss.emoji||"")} 「${esc(dmgLine)}」</div>`;
+      if(q._revenge){
+        banners += `<div class="counter-banner">🔥 ${esc((boss.lines&&boss.lines.counter) || "カウンター攻撃! リベンジ成功でクリティカル!!")}</div>`;
+      }
+      if(pre && pre.preSubjPct < SEAL_THRESHOLD && postSubjPct >= SEAL_THRESHOLD){
+        s.extra.sealBreaks.push(q.cat);
+        banners += `<div class="sealbreak-banner">✨ ${esc((boss.lines&&boss.lines.sealBreak) || "封印がひとつ解けた!")}(${esc(q.cat)})</div>`;
+      }
+      return { banners, okHead:"⚔️ ヒット!" };
+    },
+    resultWorldHtml: (world, s) => {
+      const boss = world.skin.boss || {};
+      const hpBefore = 100 - s.extra.startOverallMastery;
+      const hpAfter = yHP();
+      const keys = yKeys();
+      const allOpen = allKaisUnlocked(world.liveQs, keys);
+      const justDefeated = hpBefore > 0 && hpAfter <= 0 && allOpen;   // 討伐ガード(yoshu §4)
+      const guarded = hpAfter <= 0 && !allOpen;
+      const sealBreaks = [...new Set(s.extra.sealBreaks)];
+      return `<div class="boss-card ${justDefeated?'defeated':''}">
+          <div class="boss-emoji-big">${justDefeated ? "🏆" : esc(boss.emoji||"👑")}</div>
+          <div class="boss-name">${esc(boss.name||"")}</div>
+          <div class="hp-label">HPの変化</div>
+          <div class="hp-bar-track"><div class="hp-bar-fill" style="width:${Math.max(hpAfter,0)}%"></div></div>
+          <div class="hp-text">${Math.max(hpBefore,0)} → ${Math.max(hpAfter,0)} / 100</div>
+          ${justDefeated ? `<div class="defeat-banner">🎉🎊 ${esc((boss.lines&&boss.lines.defeat) || "討伐した!")} 🎊🎉</div>` : ""}
+          ${guarded ? `<div class="defeat-banner">まだ封印された力が残っておるぞ?(習ったら次の回を解放しよう)</div>` : ""}
+        </div>
+        ${sealBreaks.length ? `<div class="sealbreak-banner">✨ ${esc((boss.lines&&boss.lines.sealBreak) || "封印がひとつ解けた!")}(${sealBreaks.map(esc).join("・")})</div>` : ""}`;
+    },
+    goHome: () => renderBossHome()
+  };
+}
+
+
+/* ===== src/ui/parent.js ===== */
+/* =====================================================================
+   ui/parent.js — おうちの人メニュー(共通1箇所)
+   仕様: v4.1 §2 / §3.1 / §4.4 / §6、fukushu §7(2経路更新・doApply共通)
+   ・バンク差し替えは科目(M/R/S/K/Y)を選択、スキン差し替えは枠(M/R/S/K/ボス)を選択
+   ・セーブコード画面はここに置く(子供の通常導線からは外す)
+   ===================================================================== */
+
+const BANK_SLOTS = ["M","R","S","K","Y"];
+const SKIN_SLOTS = ["M","R","S","K","BOSS"];
+const SKIN_SLOT_LABEL = { M:"算数(ふくしゅう)", R:"理科(ふくしゅう)", S:"社会(ふくしゅう)", K:"国語(ふくしゅう)", BOSS:"じゅんび(ボス)" };
+
+let parentBankSlot = "M";
+let parentSkinSlot = "M";
+
+function skinWorldOf(slot){ return slot === "BOSS" ? WORLDS.Y : WORLDS[slot]; }
+
+function renderParentMenu(msg){
+  quiz = null;
+  const bankMsg = msg && msg.target === "bank" ? msg : null;
+  const skinMsg = msg && msg.target === "skin" ? msg : null;
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    <div class="topbar"><button class="quit-btn" id="back">← もどる</button></div>
+    <div class="home-title" style="font-size:22px">⚙️ おうちの人メニュー</div>
+    <div class="home-sub">バンク(問題)・スキン(見た目)の更新とセーブコードはここから。子どもの画面には出てきません。</div>
+
+    <div class="map-card">
+      <div class="map-label">いまのバンク</div>
+      <div class="bank-status">
+        ${BANK_SLOTS.map(s => {
+          const w = WORLDS[s];
+          return `<div>${esc(SUBJECT_LABEL[s])}(${s}): <b>${esc(w.bank.bankVersion||"-")}</b>
+            ${w.allQs.length}問(有効 ${w.liveQs.length})・${w.bankSource==="local"?"端末に投入":"内蔵"}</div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="code-card">
+      <div class="code-label">📚 バンクを更新する</div>
+      <select id="bankSlot" class="slot-select">
+        ${BANK_SLOTS.map(s => `<option value="${s}" ${s===parentBankSlot?"selected":""}>${esc(SUBJECT_LABEL[s])}(${s})</option>`).join("")}
+      </select>
+      <div class="code-label" style="margin-top:12px;">📂 バンクJSONファイルを開く(かんたん・おすすめ)</div>
+      <input type="file" id="bankFile" accept=".json,application/json,text/plain" class="bank-file">
+      <div class="code-label" style="margin-top:14px;">📋 またはJSON全文を貼り付け</div>
+      <textarea id="bankPaste" class="bank-paste" rows="6" placeholder="ここにバンクJSON全文を貼り付け"></textarea>
+      <div class="code-row" style="margin-top:10px;">
+        <button class="code-btn" id="applyBankBtn" style="flex:1;">バンクを更新する</button>
+      </div>
+      ${bankMsg ? `<div class="code-msg ${bankMsg.ok?'ok':'ng'}">${esc(bankMsg.text)}</div>` : ""}
+    </div>
+    <button class="reset-bank-btn" id="resetBankBtn">🔄 えらんだ科目を内蔵バンクに戻す</button>
+
+    <div class="code-card" style="margin-top:20px;">
+      <div class="code-label">🎭 スキンを更新する</div>
+      <select id="skinSlot" class="slot-select">
+        ${SKIN_SLOTS.map(s => `<option value="${s}" ${s===parentSkinSlot?"selected":""}>${esc(SKIN_SLOT_LABEL[s])}</option>`).join("")}
+      </select>
+      <div class="skin-status" id="skinStatus"></div>
+      <div class="code-label" style="margin-top:12px;">📂 スキンJSONファイルを開く</div>
+      <input type="file" id="skinFile" accept=".json,application/json,text/plain" class="bank-file">
+      <div class="code-label" style="margin-top:14px;">📋 またはJSON全文を貼り付け</div>
+      <textarea id="skinPaste" class="bank-paste" rows="5" placeholder="ここにスキンJSON全文を貼り付け"></textarea>
+      <div class="code-row" style="margin-top:10px;">
+        <button class="code-btn" id="applySkinBtn" style="flex:1;">スキンを更新する</button>
+      </div>
+      ${skinMsg ? `<div class="code-msg ${skinMsg.ok?'ok':'ng'}">${esc(skinMsg.text)}</div>` : ""}
+    </div>
+    <button class="reset-bank-btn" id="resetSkinBtn">🔄 えらんだ枠を内蔵スキンに戻す</button>
+
+    <button class="reset-bank-btn" id="codeScreenBtn" style="margin-top:20px;">🔑 セーブコード(発行・読み込み)</button>`;
+
+  bindBanner();
+  document.getElementById("back").addEventListener("click", () => renderCurrentView());
+  document.getElementById("codeScreenBtn").addEventListener("click", () => renderSaveCodeScreen());
+
+  const slotSel = document.getElementById("bankSlot");
+  slotSel.addEventListener("change", () => { parentBankSlot = slotSel.value; });
+  const skinSel = document.getElementById("skinSlot");
+  const refreshSkinStatus = () => {
+    const w = skinWorldOf(skinSel.value);
+    document.getElementById("skinStatus").innerHTML =
+      `いま: <b>${esc(w.skin.skinVersion||"-")}</b>(${esc(w.skin.title||"")})・${w.skinSource==="local"?"端末に投入":"内蔵"}`;
+  };
+  skinSel.addEventListener("change", () => { parentSkinSlot = skinSel.value; refreshSkinStatus(); });
+  refreshSkinStatus();
+
+  /* ---------- バンク更新(貼り付け・ファイルの2経路とも doApplyBank を通る) ---------- */
+  const doApplyBank = (text) => {
+    const sub = parentBankSlot;
+    const w = WORLDS[sub];
+    const result = validateBankPaste(text, sub, w.allQs.map(q => q.id));
+    if(!result.ok){
+      renderParentMenu({ target:"bank", ok:false, text:"❌ 更新できませんでした: " + result.reason });
+      return;
+    }
+    if(sub === "Y" && result.bank.bankVersion !== w.bank.bankVersion){
+      /* サイクル交代はメニュー経由でも §7.1 と同一処理を通す(記録漏れ防止) */
+      renderCycleSwitchConfirm(result.bank, "menu");
+      return;
+    }
+    applyBankToWorld(sub, result.bank);
+    renderParentMenu({ target:"bank", ok:true, text: storageAvailable
+      ? "✅ 更新しました!(この端末に保存されました)"
+      : "✅ 今回のセッションで更新しました(保存はされていません。次回はまた読み込んでね)" });
+  };
+  document.getElementById("applyBankBtn").addEventListener("click", () => doApplyBank(document.getElementById("bankPaste").value));
+  document.getElementById("bankFile").addEventListener("change", ev => readFileInto(ev, doApplyBank, "bank"));
+
+  document.getElementById("resetBankBtn").addEventListener("click", () => {
+    const sub = parentBankSlot;
+    const builtin = BUILTIN_BANKS[sub];
+    if(sub === "Y" && builtin.bankVersion !== WORLDS.Y.bank.bankVersion){
+      renderCycleSwitchConfirm(builtin, "menu");
+      return;
+    }
+    clearAdopted(keyBank(sub));
+    applyBankToWorld(sub, builtin, true);
+    renderParentMenu({ target:"bank", ok:true, text:`🔄 ${SUBJECT_LABEL[sub]}を内蔵バンクに戻しました。` });
+  });
+
+  /* ---------- スキン更新 ---------- */
+  const doApplySkin = (text) => {
+    const slot = parentSkinSlot;
+    const result = validateSkinPaste(text, slot === "BOSS" ? "boss" : "fukushu");
+    if(!result.ok){
+      renderParentMenu({ target:"skin", ok:false, text:"❌ 更新できませんでした: " + result.reason });
+      return;
+    }
+    const w = skinWorldOf(slot);
+    w.skin = result.skin;
+    w.skinSource = "local";
+    writeAdopted(keySkin(slot), result.skin, BUILTIN_SKINS[slot].skinVersion);
+    renderParentMenu({ target:"skin", ok:true, text: storageAvailable
+      ? "✅ スキンを更新しました!(この端末に保存されました)"
+      : "✅ 今回のセッションでスキンを更新しました(保存はされていません)。" });
+  };
+  document.getElementById("applySkinBtn").addEventListener("click", () => doApplySkin(document.getElementById("skinPaste").value));
+  document.getElementById("skinFile").addEventListener("change", ev => readFileInto(ev, doApplySkin, "skin"));
+
+  document.getElementById("resetSkinBtn").addEventListener("click", () => {
+    const slot = parentSkinSlot;
+    const w = skinWorldOf(slot);
+    clearAdopted(keySkin(slot));
+    w.skin = BUILTIN_SKINS[slot];
+    w.skinSource = "builtin";
+    renderParentMenu({ target:"skin", ok:true, text:`🔄 ${SKIN_SLOT_LABEL[slot]}を内蔵スキンに戻しました。` });
+  });
+}
+
+function readFileInto(ev, cb, what){
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload  = () => cb(String(rd.result));
+  rd.onerror = () => renderParentMenu({ target:what, ok:false, text:"❌ ファイルを読み込めませんでした。" });
+  rd.readAsText(f);
+}
+
+/* バンクを世界へ適用。進捗は保持し、増えた問題は未出題として扱う(§4.2) */
+function applyBankToWorld(sub, bank, isBuiltinReset){
+  const w = WORLDS[sub];
+  w.bank = bank;
+  deriveWorld(w);
+  w.state = reconcileState(w.state, bank);
+  saveState(sub, w.state);
+  if(sub === "Y"){
+    mirrorYBank(bank);                                   // §7.1 実装要件
+  } else if(isBuiltinReset){
+    w.bankSource = "builtin";
+  } else {
+    writeAdopted(keyBank(sub), bank, BUILTIN_BANKS[sub].bankVersion);
+    w.bankSource = bank.bankVersion === BUILTIN_BANKS[sub].bankVersion ? "builtin" : "local";
+  }
+}
+
+/* ---------- セーブコード画面(§4.4) ---------- */
+let codeScreenSubject = "M";
+
+function renderSaveCodeScreen(msg){
+  quiz = null;
+  const sub = codeScreenSubject;
+  const w = WORLDS[sub];
+  const mode = sub === "Y" ? "yoshu" : "fukushu";
+  const code = makeSaveCode(w.allQs, w.state.boxes, w.state.xp, mode);
+
+  app.innerHTML = `
+    ${bannerHtml()}
+    <div class="topbar"><button class="quit-btn" id="back">← おうちの人メニューへ</button></div>
+    <div class="home-title" style="font-size:22px">🔑 セーブコード</div>
+    <div class="home-sub">端末を移るとき・保存が消えたときの復旧用です。ふだんは自動保存されています。</div>
+
+    <select id="codeSlot" class="slot-select">
+      ${BANK_SLOTS.map(s => `<option value="${s}" ${s===sub?"selected":""}>${esc(SUBJECT_LABEL[s])}(${s})</option>`).join("")}
+    </select>
+
+    <div class="savecode-card">
+      <div class="savecode-label">きょうのセーブコード(おうちの人にメモしてもらおう)</div>
+      <div class="savecode-text">${esc(code)}</div>
+      <div class="savecode-note">${sub==="Y"
+        ? "ボス交代をまたぐ復元はできません。"
+        : "次回このコードを入れると、たびの続きと復習の記録がもどるよ。"}</div>
+    </div>
+
+    <div class="code-card">
+      <div class="code-label">📥 コードを読み込む(いまの進捗は上書きされます)</div>
+      <div class="code-row">
+        <input type="text" class="code-input" id="codeInput" placeholder="V2-260726-..." autocapitalize="characters">
+        <button class="code-btn" id="codeBtn">読み込む</button>
+      </div>
+      ${msg ? `<div class="code-msg ${msg.ok?'ok':'ng'}">${esc(msg.text)}</div>` : ""}
+    </div>`;
+
+  bindBanner();
+  document.getElementById("back").addEventListener("click", () => renderParentMenu());
+  const sel = document.getElementById("codeSlot");
+  sel.addEventListener("change", () => { codeScreenSubject = sel.value; renderSaveCodeScreen(); });
+
+  document.getElementById("codeBtn").addEventListener("click", () => {
+    const raw = document.getElementById("codeInput").value;
+    const parsed = parseSaveCode(raw, w.allQs, mode);
+    if(!parsed){
+      renderSaveCodeScreen({ ok:false, text:"コードがちがうみたい。もういちど確認してね。" });
+      return;
+    }
+    if(parsed.error === "bank_old"){
+      renderSaveCodeScreen({ ok:false, text:"このコードは今のバンクより新しい問題数を含んでいるみたい。アプリのバンクが古いかも。最新バンクを読み込んでね。" });
+      return;
+    }
+    /* §4.3: コード復元のときだけ last を復元日で一括初期化する */
+    w.state = applyRestoredCode(w.state, parsed, w.bank, new Date());
+    saveState(sub, w.state);
+    renderSaveCodeScreen({ ok:true, text:"つづきを読み込んだよ!" + (parsed.version==="V1" ? "(古い形式のコードだったけど読み込めたよ)" : "") });
+  });
+}
+
+
+/* ===== src/ui/app.js ===== */
+/* =====================================================================
+   ui/app.js — 起動シーケンス
+   仕様: v4.1 §3.1(採用規則)/ §4(自動保存)/ §7(PWA)/ §7.1(サイクル交代確認)
+   ===================================================================== */
+
+/* ---------- 内蔵デフォルト(BANK/SKINブロックが壊れていた場合の緊急用) ---------- */
+function emptyBankFor(subject){
+  return { bankVersion: "fallback_" + subject, subject, cats: [], questions: [],
+           testDate: subject === "Y" ? "2000-01-01" : undefined };
+}
+const DEFAULT_FUKUSHU_SKIN = {
+  skinVersion:"fallback", title:"クエスト",
+  colors:{bg:"#EEF4FB",ink:"#26324B",accent:"#FF8A3D",ok:"#2FBF8F",ng:"#F26D6D",star:"#FFC53D"},
+  praise:["やったね!","すごい!"], cheer:["おしい! もう一度チャレンジ。"],
+  hintPraise:"ヒントを使えたのもナイス判断!",
+  writeTip:"まずノートに書こう!",
+  map:{type:"journey", nodes:[{name:"スタート",emoji:"🚩"},{name:"ゴール",emoji:"🏁"}], stepPerCorrect:1, goalMessage:"ゴール!"},
+  titles:[]
+};
+const DEFAULT_BOSS_SKIN = {
+  skinVersion:"fallback", title:"テストじゅんびクエスト",
+  boss:{ name:"れんしゅう魔王", emoji:"👾", flavor:"「とりあえず、れんしゅうからじゃな」",
+    lines:{ appear:"さあ、はじめるかの!", damage:["いてて!","ぐぬぬ…"], counter:"カウンター攻撃!",
+            sealBreak:"封印がひとつ解けた!", defeat:"まいった〜!", escape:"また今度な〜。" } },
+  colors:{bg:"#FFF7EC",ink:"#3A2E2A",accent:"#FF8A3D",ok:"#2FBF8F",ng:"#F26D6D",star:"#FFC53D"},
+  praise:["やったね!","すごい!"], cheer:["おしい! もう一度チャレンジ。"],
+  hintPraise:"ヒントを使えたのもナイス判断!",
+  writeTip:"まずノートに式やことばを書こう!",
+  titles:[]
+};
+
+const BUILTIN_BANKS = {};
+const BUILTIN_SKINS = {};
+
+function parseInjected(raw, label, validate, fallback){
+  try{
+    const parsed = JSON.parse(raw);
+    if(validate(parsed)) return parsed;
+    throw new Error("validation failed");
+  }catch(e){
+    fallbackWarnings.push(`${label}の読み込みに失敗したため、内蔵の簡易データで起動しています。`);
+    return fallback;
+  }
+}
+
+function boot(){
+  probeStorage();
+
+  /* 注入された10ブロックを読み込む */
+  BUILTIN_BANKS.M = parseInjected(BANK_M_RAW, "算数バンク", b => validateBankObj(b,"M"), emptyBankFor("M"));
+  BUILTIN_BANKS.R = parseInjected(BANK_R_RAW, "理科バンク", b => validateBankObj(b,"R"), emptyBankFor("R"));
+  BUILTIN_BANKS.S = parseInjected(BANK_S_RAW, "社会バンク", b => validateBankObj(b,"S"), emptyBankFor("S"));
+  BUILTIN_BANKS.K = parseInjected(BANK_K_RAW, "国語バンク", b => validateBankObj(b,"K"), emptyBankFor("K"));
+  BUILTIN_BANKS.Y = parseInjected(BANK_Y_RAW, "じゅんびバンク", b => validateBankObj(b,"Y"), emptyBankFor("Y"));
+  BUILTIN_SKINS.M = parseInjected(SKIN_FUKUSHU_M_RAW, "算数スキン", s => validateSkinObj(s,"fukushu"), DEFAULT_FUKUSHU_SKIN);
+  BUILTIN_SKINS.R = parseInjected(SKIN_FUKUSHU_R_RAW, "理科スキン", s => validateSkinObj(s,"fukushu"), DEFAULT_FUKUSHU_SKIN);
+  BUILTIN_SKINS.S = parseInjected(SKIN_FUKUSHU_S_RAW, "社会スキン", s => validateSkinObj(s,"fukushu"), DEFAULT_FUKUSHU_SKIN);
+  BUILTIN_SKINS.K = parseInjected(SKIN_FUKUSHU_K_RAW, "国語スキン", s => validateSkinObj(s,"fukushu"), DEFAULT_FUKUSHU_SKIN);
+  BUILTIN_SKINS.BOSS = parseInjected(SKIN_BOSS_RAW, "ボススキン", s => validateSkinObj(s,"boss"), DEFAULT_BOSS_SKIN);
+
+  const switchedNotices = [];
+  let resyncYMirror = false;      // 同版のためサイクル交代不要だが、記録の更新が要る場合
+
+  /* ---------- §3.1 採用規則でバンク・スキンを決める ---------- */
+  ["M","R","S","K","Y"].forEach(sub => {
+    const isY = sub === "Y";
+    const a = adoptResource(
+      keyBank(sub), BUILTIN_BANKS[sub],
+      b => b.bankVersion,
+      b => validateBankObj(b, sub),
+      isY                                        // bank_Y の内蔵切替は §7.1 へ回す
+    );
+    if(a.warning) fallbackWarnings.push(a.warning);
+    if(a.switched) switchedNotices.push(SUBJECT_LABEL[sub]);
+    WORLDS[sub] = deriveWorld({
+      subject: sub,
+      mode: isY ? "yoshu" : "fukushu",
+      bank: a.value,
+      bankSource: a.source,
+      skin: null, skinSource: "builtin",
+      state: null
+    });
+    /* §7.1 の発火条件は「内蔵bank_YのbankVersionが"現在有効なbank_Y"と異なる場合」。
+       おうちの人メニューで投入したのと同じ版が後から push で内蔵に入っただけのときは
+       サイクル交代ではないので、確認を出さずに記録(ミラー)だけ更新して続行する。
+       (ここで確認を出すと、中身が同じなのに進捗リセットを迫ることになる) */
+    if(isY && a.pendingSwitch){
+      if(a.pendingSwitch.bankVersion === a.value.bankVersion) resyncYMirror = true;
+      else pendingCycleSwitch = a.pendingSwitch;
+    }
+  });
+
+  SKIN_SLOTS.forEach(slot => {
+    const a = adoptResource(
+      keySkin(slot), BUILTIN_SKINS[slot],
+      s => s.skinVersion,
+      s => validateSkinObj(s, slot === "BOSS" ? "boss" : "fukushu"),
+      false
+    );
+    if(a.warning) fallbackWarnings.push(a.warning);
+    const w = skinWorldOf(slot);
+    w.skin = a.value;
+    w.skinSource = a.source;
+  });
+
+  /* ---------- 進捗の読み込み(§4.2 突合つき) ---------- */
+  ["M","R","S","K","Y"].forEach(sub => {
+    WORLDS[sub].state = loadState(sub, WORLDS[sub].bank);
+  });
+
+  /* ---------- §7.1 実装要件: 現在有効な bank_Y は常に quest_bank_Y にミラー ---------- */
+  if(!readAdopted(keyBank("Y")) || resyncYMirror) mirrorYBank(WORLDS.Y.bank);
+
+  /* ---------- 自動保存のフック(§4.1) ---------- */
+  document.addEventListener("visibilitychange", () => {
+    if(document.visibilityState === "hidden") flushAllStates();
+  });
+  window.addEventListener("pagehide", flushAllStates);
+
+  registerServiceWorker();
+
+  /* ---------- 初期表示 ---------- */
+  VIEW = loadLastView();
+  if(pendingCycleSwitch){
+    /* §7.1-1: 起動時に交代確認。プレイ中には割り込まない */
+    renderCycleSwitchConfirm(pendingCycleSwitch, "startup");
+  } else {
+    renderCurrentView();
+  }
+  if(switchedNotices.length){
+    showToast(`新しいバンクが届いたので切りかえたよ(${switchedNotices.join("・")})`);
+  }
+}
+
+/* ---------- Service Worker(§7) ---------- */
+function registerServiceWorker(){
+  /* file:// では SW を使わない(§9-10: SW以外の全機能が動くこと) */
+  if(location.protocol !== "http:" && location.protocol !== "https:") return;
+  if(!("serviceWorker" in navigator)) return;
+
+  /* 更新適用はユーザーのタップ起点。controllerchange を待ってから1回だけリロードする */
+  let reloading = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if(reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
+  const offerUpdate = (waiting) => {
+    showToast("あたらしいバージョンがあるよ(タップで読みこみ)", () => {
+      flushAllStates();
+      waiting.postMessage({ type: "SKIP_WAITING" });
+    });
+  };
+
+  navigator.serviceWorker.register("./sw.js").then(reg => {
+    if(reg.waiting && navigator.serviceWorker.controller) offerUpdate(reg.waiting);
+    reg.addEventListener("updatefound", () => {
+      const sw = reg.installing;
+      if(!sw) return;
+      sw.addEventListener("statechange", () => {
+        /* 既にコントローラがいる=更新。学習中の強制リロードはせずトーストで知らせる */
+        if(sw.state === "installed" && navigator.serviceWorker.controller) offerUpdate(sw);
+      });
+    });
+  }).catch(() => {});
+}
+
+boot();
+
+
+})();
+</script>
+</body>
+</html>

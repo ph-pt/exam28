@@ -1,0 +1,41 @@
+{
+  "skinVersion": "map_japan_2026_07_shakai",
+  "title": "しゃかいクエスト 日本一周",
+  "writeTip": "まずノートにひらがなで書いてみよう。それが「さいしょの一手」!",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#3D7BD9",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "すごい!", "その調子!", "たんけん隊長みたい!", "かんぺき!", "物知りだね!?"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがいは宝物。", "ひらがなで書けたならOK。次は漢字もねらおう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"北海道","emoji":"🐄"}, {"name":"青森","emoji":"🍎"}, {"name":"岩手","emoji":"🌰"},
+      {"name":"秋田","emoji":"🌾"}, {"name":"宮城","emoji":"🐟"}, {"name":"山形","emoji":"🍒"},
+      {"name":"福島","emoji":"🍑"}, {"name":"茨城","emoji":"🥬"}, {"name":"栃木","emoji":"🍓"},
+      {"name":"群馬","emoji":"♨️"}, {"name":"埼玉","emoji":"🥕"}, {"name":"千葉","emoji":"🥜"},
+      {"name":"東京","emoji":"🗼"}, {"name":"神奈川","emoji":"⛵"}, {"name":"新潟","emoji":"🍙"},
+      {"name":"富山","emoji":"🦐"}, {"name":"石川","emoji":"🦀"}, {"name":"福井","emoji":"🦕"},
+      {"name":"山梨","emoji":"🍇"}, {"name":"長野","emoji":"🍎"}, {"name":"岐阜","emoji":"🏯"},
+      {"name":"静岡","emoji":"🍵"}, {"name":"愛知","emoji":"🚗"}, {"name":"三重","emoji":"🦪"},
+      {"name":"滋賀","emoji":"🌊"}, {"name":"京都","emoji":"⛩️"}, {"name":"大阪","emoji":"🐙"},
+      {"name":"兵庫","emoji":"🐮"}, {"name":"奈良","emoji":"🦌"}, {"name":"和歌山","emoji":"🍊"},
+      {"name":"鳥取","emoji":"🍈"}, {"name":"島根","emoji":"⛩️"}, {"name":"岡山","emoji":"🍑"},
+      {"name":"広島","emoji":"🦪"}, {"name":"山口","emoji":"🐡"}, {"name":"徳島","emoji":"🌊"},
+      {"name":"香川","emoji":"🍜"}, {"name":"愛媛","emoji":"🍊"}, {"name":"高知","emoji":"🐟"},
+      {"name":"福岡","emoji":"🍜"}, {"name":"佐賀","emoji":"🍈"}, {"name":"長崎","emoji":"🐋"},
+      {"name":"熊本","emoji":"🐴"}, {"name":"大分","emoji":"♨️"}, {"name":"宮崎","emoji":"🐔"},
+      {"name":"鹿児島","emoji":"🌋"}, {"name":"沖縄","emoji":"🌺"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "日本一周たっせい!! ゴールの沖縄に到着だ🌺"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "地図読み名人"},
+    {"cond": "hintCorrect5", "name": "たんけん助手"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト探検家"},
+    {"cond": "totalCorrect20", "name": "見習い探検家"},
+    {"cond": "totalCorrect50", "name": "日本地理マスター"}
+  ]
+}

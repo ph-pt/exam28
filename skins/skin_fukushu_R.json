@@ -1,0 +1,41 @@
+{
+  "skinVersion": "lab_journey_2026_07",
+  "title": "りかクエスト 研究所たんけん",
+  "writeTip": "まずノートに漢字で書いてみよう。それが「さいしょの一手」!",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#2FAF96",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "すごい!", "その調子!", "はかせに近づいた!", "かんぺき!", "天才かも!?"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがいは宝物。", "漢字で書けたならOK。次は完璧をねらおう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"じっけん室にゅうこう","emoji":"🚪"},
+      {"name":"ビーカーコーナー","emoji":"🧪"},
+      {"name":"pHけんさ室","emoji":"🌡️"},
+      {"name":"じょうはつざら室","emoji":"⚗️"},
+      {"name":"すいようえきラボ卒業","emoji":"🧫"},
+      {"name":"てんもんドーム入口","emoji":"🔭"},
+      {"name":"たいようかんそくデッキ","emoji":"🌞"},
+      {"name":"いど・けいどマップ室","emoji":"🧭"},
+      {"name":"せいざかんそく室","emoji":"⭐"},
+      {"name":"つきのみちかけラボ","emoji":"🌕"},
+      {"name":"てんもんラボ卒業","emoji":"🪐"},
+      {"name":"こん虫はかせコーナー","emoji":"🐛"},
+      {"name":"せきついどうぶつ図かん室","emoji":"🦴"},
+      {"name":"へんたいすいぞくかん","emoji":"🐸"},
+      {"name":"いきものラボ卒業","emoji":"🧬"},
+      {"name":"りかはかせにんてい","emoji":"🏅"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "りかはかせ にんてい!! おめでとう🔬🏅"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "かんさつ名人"},
+    {"cond": "hintCorrect5", "name": "じっけん助手"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト研究員"},
+    {"cond": "totalCorrect20", "name": "けんきゅういん"},
+    {"cond": "totalCorrect50", "name": "しゅにんけんきゅういん"}
+  ]
+}

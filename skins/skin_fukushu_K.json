@@ -1,0 +1,35 @@
+{
+  "skinVersion": "word_journey_2026_07",
+  "title": "こくごクエスト ことばの旅",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#C86FA0",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "ことばの力がついてきた!", "その調子!", "ナイスな読み!", "かんぺき!", "いまの一問、きれいだったよ!"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがえた言葉ほどよくおぼえる。", "意味が言えたならOK。次は書くところまでつなげよう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "writeTip": "漢字はノートにも書いてみよう",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"ことばの村","emoji":"🏡"}, {"name":"ひらがな野原","emoji":"🌸"},
+      {"name":"カタカナ坂","emoji":"⛰️"}, {"name":"漢字の森","emoji":"🌳"},
+      {"name":"部首の谷","emoji":"🍃"}, {"name":"音読みの泉","emoji":"💧"},
+      {"name":"訓読みの滝","emoji":"🌊"}, {"name":"熟語の橋","emoji":"🌉"},
+      {"name":"ことわざ峠","emoji":"🦉"}, {"name":"慣用句の市場","emoji":"🏮"},
+      {"name":"辞書の塔","emoji":"📕"}, {"name":"作文の丘","emoji":"✏️"},
+      {"name":"段落の階段","emoji":"🪜"}, {"name":"主語の島","emoji":"🏝️"},
+      {"name":"述語の港","emoji":"⛵"}, {"name":"気もちの海","emoji":"💙"},
+      {"name":"物語の城","emoji":"🏰"}, {"name":"詩のあずまや","emoji":"🎐"},
+      {"name":"説明文の書庫","emoji":"📚"}, {"name":"ことばの大図書館","emoji":"📖"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "ことばの旅、たっせい!! 大図書館のとびらが開いたよ📖"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "ことば名人"},
+    {"cond": "hintCorrect5", "name": "辞書の達人"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト文豪"},
+    {"cond": "totalCorrect50", "name": "ことばの旅人"},
+    {"cond": "totalCorrect100", "name": "ことばの大賢者"}
+  ]
+}

@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>しゃかいクエスト</title>
+<style>
+  :root{
+    --ink:#26324B;
+    --paper:#EEF4FB;
+    --card:#FFFFFF;
+    --orange:#FF8A3D;
+    --orange-deep:#F0742A;
+    --mint:#2FBF8F;
+    --coral:#F26D6D;
+    --star:#FFC53D;
+    --sky:#5AA9E6;
+    --line:#D9E4F0;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    font-family:"Hiragino Maru Gothic ProN","ヒラギノ丸ゴ ProN","BIZ UDGothic","Yu Gothic",sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    display:flex; justify-content:center;
+    min-height:100%;
+    -webkit-user-select:none; user-select:none;
+  }
+  #app{width:100%; max-width:720px; padding:20px 18px 30px; display:flex; flex-direction:column; min-height:100vh;}
+
+  .warn-banner{background:#FFF3E6; border:2px solid var(--orange); border-radius:14px; padding:10px 14px; font-size:13px; margin-bottom:14px; line-height:1.6;}
+
+  /* ---------- home ---------- */
+  .home-title{ text-align:center; font-size:32px; font-weight:800; letter-spacing:1px; margin:10px 0 4px; }
+  .home-sub{text-align:center; font-size:14px; color:#5B6B87; margin-bottom:20px;}
+
+  .map-card{
+    background:var(--card); border-radius:22px; padding:20px 20px 18px; margin-bottom:18px;
+    box-shadow:0 5px 0 var(--line);
+  }
+  .map-label{font-size:12.5px; color:#8896AC; font-weight:700; margin-bottom:6px;}
+  .map-here{display:flex; align-items:center; gap:12px;}
+  .map-emoji{font-size:42px; flex-shrink:0;}
+  .map-name{font-size:22px; font-weight:800;}
+  .map-progress-wrap{margin-top:14px;}
+  .map-bar-track{background:#EAF1FA; border-radius:999px; height:12px; overflow:hidden;}
+  .map-bar-fill{background:linear-gradient(90deg, var(--sky), var(--mint)); height:100%; border-radius:999px; transition:width .4s;}
+  .map-progress-text{font-size:12px; color:#8896AC; margin-top:6px; display:flex; justify-content:space-between;}
+  .map-goal{font-size:13px; color:var(--orange-deep); font-weight:700; margin-top:8px; text-align:center;}
+
+  .code-card{ background:var(--card); border-radius:20px; padding:16px 18px; margin-bottom:16px; box-shadow:0 4px 0 var(--line); }
+  .code-label{font-size:13.5px; font-weight:700; margin-bottom:8px;}
+  .code-row{display:flex; gap:8px;}
+  .code-input{
+    flex:1; font-family:inherit; font-size:15px; padding:10px 12px; border-radius:12px;
+    border:2px solid var(--line); background:#F8FAFD; color:var(--ink); letter-spacing:1px;
+  }
+  .code-btn{
+    font-family:inherit; font-size:14px; font-weight:800; padding:10px 16px; border:none;
+    border-radius:12px; background:var(--sky); color:#fff; cursor:pointer; box-shadow:0 3px 0 #3E86BD;
+  }
+  .code-btn:active{transform:translateY(2px); box-shadow:0 1px 0 #3E86BD;}
+  .code-msg{font-size:13px; margin-top:8px; line-height:1.6;}
+  .code-msg.ok{color:#159A6E;} .code-msg.ng{color:#D64F4F;}
+
+  .start-btn{
+    display:block; width:100%; background:var(--orange); color:#fff; border:none;
+    border-radius:22px; padding:20px 22px; margin-bottom:14px; text-align:center;
+    box-shadow:0 5px 0 var(--orange-deep); cursor:pointer;
+    font-family:inherit; font-size:22px; font-weight:800; letter-spacing:1px;
+    transition:transform .08s;
+  }
+  .start-btn:active{transform:translateY(3px); box-shadow:0 2px 0 var(--orange-deep);}
+  .start-sub{font-size:13px; color:#5B6B87; text-align:center; margin-top:-6px; margin-bottom:14px;}
+  .home-note{font-size:12px; color:#8896AC; text-align:center; margin-top:auto; padding-top:20px; line-height:1.7;}
+  .parent-menu-row{text-align:center; padding-top:14px;}
+  .parent-menu-btn{background:none; border:none; color:#B8C4D6; font-size:11.5px; font-family:inherit; padding:8px; cursor:pointer; text-decoration:underline;}
+  .bank-paste{
+    width:100%; font-family:ui-monospace,monospace; font-size:12.5px; line-height:1.5; padding:10px 12px;
+    border-radius:12px; border:2px solid var(--line); background:#F8FAFD; color:var(--ink); resize:vertical;
+  }
+  .bank-file{width:100%; font-family:inherit; font-size:14px; padding:10px;
+    background:#F4F8FD; border:2px dashed var(--sky); border-radius:12px;}
+  .reset-bank-btn{
+    display:block; width:100%; margin-top:14px; background:var(--card); color:var(--ink); border:none;
+    border-radius:16px; padding:15px 0; font-family:inherit; font-size:15px; font-weight:800;
+    box-shadow:0 4px 0 var(--line); cursor:pointer;
+  }
+  .reset-bank-btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+
+  .doors-label{font-size:14px; font-weight:800; color:#5B6B87; margin:2px 0 10px; text-align:center;}
+  .stage-btn{
+    display:block; width:100%; background:var(--card); border:none;
+    border-radius:20px; padding:16px 20px; margin-bottom:12px; text-align:left;
+    box-shadow:0 4px 0 var(--line); cursor:pointer;
+    font-family:inherit; color:var(--ink); transition:transform .08s;
+  }
+  .stage-btn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+  .stage-btn .stage-name{font-size:19px; font-weight:800;}
+  .stage-btn .stage-desc{font-size:13px; color:#5B6B87; margin-top:4px;}
+  .stage-btn.omakase{background:#FFF3E6;}
+
+  /* ---------- quiz ---------- */
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:8px;}
+  .quit-btn{background:none; border:none; font-size:14px; color:#8896AC; font-family:inherit; padding:6px 4px; cursor:pointer; flex-shrink:0;}
+  .journey-mini{flex:1; display:flex; align-items:center; gap:6px;}
+  .journey-mini .em{font-size:16px;}
+  .journey-mini-track{flex:1; background:#DCE7F5; border-radius:999px; height:7px; overflow:hidden;}
+  .journey-mini-fill{background:var(--mint); height:100%; border-radius:999px; transition:width .5s;}
+  .combo{font-size:13px; font-weight:800; color:var(--orange-deep); min-width:70px; text-align:right; flex-shrink:0;}
+
+  .rail{display:flex; gap:5px; justify-content:center; margin-bottom:10px; flex-wrap:wrap;}
+  .rail span{font-size:16px; filter:grayscale(1) opacity(.35); transition:filter .3s, transform .3s;}
+  .rail span.on{filter:none; transform:scale(1.15);}
+  .rail span.ng{filter:grayscale(1) opacity(.8);}
+
+  .revenge-badge{
+    display:inline-block; background:var(--coral); color:#fff; font-size:12.5px; font-weight:800;
+    border-radius:999px; padding:4px 12px; margin-bottom:8px;
+  }
+
+  .qcard{
+    background:var(--card); border-radius:24px; padding:24px 22px;
+    box-shadow:0 5px 0 var(--line);
+  }
+  .qnum{font-size:13px; font-weight:700; color:var(--sky); margin-bottom:8px;}
+  .qtext{font-size:21px; line-height:1.7; font-weight:600; min-height:3.4em;}
+  .write-tip{font-size:12.5px; color:#8896AC; margin-top:10px;}
+
+  .answer-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px;}
+  .answer-box{
+    flex:1; font-size:28px; font-weight:800; text-align:center;
+    background:#F4F8FD; border:2px dashed var(--sky); border-radius:14px;
+    min-height:58px; display:flex; align-items:center; justify-content:center;
+    letter-spacing:1px; overflow:hidden;
+  }
+  .answer-box.filled{border-style:solid;}
+  input.answer-box{
+    display:block; text-align:center; padding:0 16px; font-family:inherit;
+    -webkit-appearance:none; appearance:none;
+  }
+  input.answer-box.answer-input{ text-align:left; }
+  input.answer-box:disabled{opacity:.7;}
+  input.answer-box::placeholder{font-size:15px; font-weight:600; color:#A9B7CC;}
+  .unit{font-size:16px; color:#5B6B87; font-weight:700; min-width:2em;}
+
+  .hint-area{margin-top:12px;}
+  .hint-btn{
+    background:#FFF3E6; color:var(--orange-deep); border:none; border-radius:999px;
+    font-family:inherit; font-size:14.5px; font-weight:700; padding:10px 18px; cursor:pointer;
+  }
+  .hint-bubble{
+    background:#FFF9EF; border-left:5px solid var(--star); border-radius:0 12px 12px 0;
+    padding:10px 14px; margin-top:8px; font-size:15px; line-height:1.6;
+  }
+
+  /* keypad */
+  .keypad{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:18px;}
+  .key{
+    font-family:inherit; font-size:26px; font-weight:800; color:var(--ink);
+    background:var(--card); border:none; border-radius:16px; padding:16px 0;
+    box-shadow:0 4px 0 var(--line); cursor:pointer; transition:transform .06s;
+  }
+  .key:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line);}
+  .key.fn{background:#E7EFF9; font-size:20px;}
+  .key.go{
+    grid-column:span 2; background:var(--orange); color:#fff; box-shadow:0 4px 0 var(--orange-deep);
+    font-size:22px; letter-spacing:2px;
+  }
+  .key.go:disabled{opacity:.45;}
+
+  /* feedback */
+  .fb{
+    margin-top:16px; border-radius:18px; padding:16px 18px; font-size:16px; line-height:1.65;
+    animation:pop .25s;
+  }
+  @keyframes pop{from{transform:scale(.92); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .fb.ok{background:#E4F8F0; border:2px solid var(--mint);}
+  .fb.ng{background:#FDECEC; border:2px solid var(--coral);}
+  .fb .fb-head{font-size:20px; font-weight:800; margin-bottom:6px;}
+  .fb.ok .fb-head{color:#159A6E;} .fb.ng .fb-head{color:#D64F4F;}
+  .next-btn{
+    display:block; width:100%; margin-top:14px;
+    background:var(--sky); color:#fff; border:none; border-radius:16px;
+    font-family:inherit; font-size:19px; font-weight:800; padding:15px 0;
+    box-shadow:0 4px 0 #3E86BD; cursor:pointer;
+  }
+  .next-btn:active{transform:translateY(3px); box-shadow:0 1px 0 #3E86BD;}
+
+  /* ---------- result ---------- */
+  .res-head{text-align:center; margin:18px 0 10px;}
+  .res-emoji{font-size:52px;}
+  .res-title{font-size:24px; font-weight:800; margin-top:8px;}
+  .res-score{text-align:center; font-size:18px; margin-bottom:6px;}
+  .res-score b{font-size:34px; color:var(--orange-deep);}
+  .res-stars{text-align:center; font-size:26px; letter-spacing:4px; margin-bottom:14px;}
+
+  .journey-card{
+    background:var(--card); border-radius:20px; padding:18px 20px; margin-bottom:16px; box-shadow:0 4px 0 var(--line);
+    text-align:center;
+  }
+  .journey-move{font-size:14px; color:#5B6B87; margin-bottom:8px;}
+  .journey-nodes{display:flex; align-items:center; justify-content:center; gap:10px; font-size:30px;}
+  .journey-arrow{font-size:18px; color:#8896AC;}
+  .journey-newname{font-size:15px; font-weight:800; margin-top:6px;}
+
+  .title-badge{
+    display:inline-block; background:linear-gradient(135deg,var(--star),var(--orange)); color:#fff;
+    font-size:14px; font-weight:800; border-radius:999px; padding:8px 18px; margin:4px 4px 12px;
+    box-shadow:0 3px 0 var(--orange-deep);
+  }
+  .title-wrap{text-align:center;}
+
+  .review-head{font-size:15px;font-weight:700;margin:8px 0 10px;}
+  .review{background:var(--card); border-radius:18px; padding:16px 18px; margin-bottom:12px; box-shadow:0 4px 0 var(--line);}
+  .review .rq{font-size:14.5px; font-weight:700; line-height:1.6;}
+  .review .ra{font-size:14px; margin-top:6px; line-height:1.6;}
+  .review .ra b{color:#159A6E;}
+  .review .ra .miss{color:#D64F4F; font-weight:700;}
+
+  .savecode-card{
+    background:#2A3550; color:#fff; border-radius:20px; padding:20px; margin:16px 0; text-align:center;
+  }
+  .savecode-label{font-size:13px; opacity:.8; margin-bottom:8px;}
+  .savecode-text{
+    font-size:19px; font-weight:800; letter-spacing:1px; word-break:break-all;
+    background:rgba(255,255,255,.12); border-radius:12px; padding:12px 14px; margin-bottom:8px;
+  }
+  .savecode-note{font-size:12.5px; opacity:.85; line-height:1.6;}
+
+  .res-btns{display:flex; gap:12px; margin-top:16px;}
+  .res-btns button{
+    flex:1; font-family:inherit; font-size:17px; font-weight:800; padding:15px 0;
+    border:none; border-radius:16px; cursor:pointer;
+  }
+  .retry{background:var(--orange); color:#fff; box-shadow:0 4px 0 var(--orange-deep);}
+  .gohome{background:var(--card); color:var(--ink); box-shadow:0 4px 0 var(--line);}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important; transition:none!important;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+"use strict";
+
+/* =====================================================================
+   さんすうクエスト v2.1 エンジン
+   仕様: spec_sansu_quest_v2.md 準拠
+   ・エンジン部は変更しない設計。BANK / SKIN ブロックのみ差し替え対象
+   ・記録・通信なし。永続化はセーブコードのみ(localStorage等は使わない)
+   ===================================================================== */
+
+/*==BANK_START==*/
+const BANK_JSON_RAW = `
+{
+  "bankVersion": "M_2026_07_02b",
+  "subject": "M",
+  "cats": [
+    {"cat":"きほん","icon":"🌱","desc":"平均・合計・回数の3つの関係をマスター"},
+    {"cat":"レベルアップ","icon":"🔥","desc":"「なりたい合計から引く」など一歩上のワザ"},
+    {"cat":"とりこぼし","icon":"🎯","desc":"計算・逆算・和差算のミス退治"}
+  ],
+  "questions": [
+    {"id":"M0001","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"テストを3回受けました。点数は 70点、80点、90点 でした。平均は何点ですか。","ans":["80"],"unit_label":"点","h1":"平均 = 合計 ÷ 回数 だよ。まず3回分をぜんぶたそう。","h2":"(70+80+90)÷3","exp":"70+80+90=240。240÷3=80点。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0002","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"4回のテストの平均が 75点 でした。4回の合計は何点ですか。","ans":["300"],"unit_label":"点","h1":"合計 = 平均 × 回数。平均の逆向きの計算だよ。","h2":"75×4","exp":"75×4=300点。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0003","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"みかんが5個あります。1個の重さの平均は 82g です。5個ぜんぶで何gですか。","ans":["410"],"unit_label":"g","h1":"合計 = 平均 × 個数 だよ。","h2":"82×5","exp":"82×5=410g。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0004","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"4回のテストの平均は 85点。はじめの3回の合計は 250点 でした。4回目は何点ですか。","ans":["90"],"unit_label":"点","h1":"まず4回分の合計を出そう。そこから3回分の合計を引くよ。","h2":"85×4−250","exp":"85×4=340。340−250=90点。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0005","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"3人の身長の平均は 140cm です。3人の身長の合計は何cmですか。","ans":["420"],"unit_label":"cm","h1":"合計 = 平均 × 人数。","h2":"140×3","exp":"140×3=420cm。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0006","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"62点、78点、85点、75点 の4回のテスト。平均は何点ですか。","ans":["75"],"unit_label":"点","h1":"まず合計。たし算をていねいに。","h2":"(62+78+85+75)÷4","exp":"合計は300。300÷4=75点。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0007","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"1日に平均96ページの本を5日間読みました。ぜんぶで何ページ読みましたか。","ans":["480"],"unit_label":"ページ","h1":"合計 = 平均 × 日数。","h2":"96×5","exp":"96×5=480ページ。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0008","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"2、4、6、8、10 の5つの数の平均はいくつですか。","ans":["6"],"unit_label":"","h1":"合計を出して5でわる。まん中の数になるかな?","h2":"(2+4+6+8+10)÷5","exp":"合計30。30÷5=6。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0009","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"6人の体重の平均は 38kg です。6人の合計は何kgですか。","ans":["228"],"unit_label":"kg","h1":"合計 = 平均 × 人数。38×6は 38×2×3 でもいいよ。","h2":"38×6","exp":"38×6=228kg。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0010","unit":"平均算","kai":null,"level":"基","cat":"きほん","q":"3回のテストの合計は 219点 でした。平均は何点ですか。","ans":["73"],"unit_label":"点","h1":"平均 = 合計 ÷ 回数。","h2":"219÷3","exp":"219÷3=73点。","src":"v1_bank","errType":"取りこぼし"},
+    {"id":"M0011","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"4回のテストの平均は 78点。5回目に 88点 をとると、5回の平均は何点になりますか。","ans":["80"],"unit_label":"点","h1":"まず4回分の合計(78×4)を出して、88をたして5でわるよ。","h2":"(78×4+88)÷5","exp":"78×4=312。312+88=400。400÷5=80点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0012","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"3回のテストの平均は 70点。4回の平均を 75点 にするには、4回目に何点とればよいですか。","ans":["90"],"unit_label":"点","h1":"「なりたい合計」から「今の合計」を引くよ。","h2":"75×4−70×3","exp":"75×4=300。70×3=210。300−210=90点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0013","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"男子4人の平均は 80点、女子6人の平均は 70点。10人全体の平均は何点ですか。","ans":["74"],"unit_label":"点","h1":"平均どうしをたして2でわるのはまちがい! それぞれの合計を出そう。","h2":"(80×4+70×6)÷10","exp":"320+420=740。740÷10=74点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0014","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"A、B、C 3人の点数の平均は 60点。AとBの2人の平均は 55点。Cは何点ですか。","ans":["70"],"unit_label":"点","h1":"3人の合計から、2人の合計を引くとCが残るよ。","h2":"60×3−55×2","exp":"180−110=70点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0015","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"5回のテストの平均は 82点。そのうち4回の平均は 80点。残りの1回は何点ですか。","ans":["90"],"unit_label":"点","h1":"5回の合計 − 4回の合計 = 残り1回。","h2":"82×5−80×4","exp":"410−320=90点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0016","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"6個の数の平均は 50。1個をのぞくと、残り5個の平均は 48 になりました。のぞいた数はいくつですか。","ans":["60"],"unit_label":"","h1":"6個の合計 − 5個の合計 = のぞいた数。","h2":"50×6−48×5","exp":"300−240=60。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0017","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"国語・理科・社会の3教科の平均は 82点。算数を入れた4教科の平均は 85点。算数は何点ですか。","ans":["94"],"unit_label":"点","h1":"4教科の合計 − 3教科の合計 = 算数。","h2":"85×4−82×3","exp":"340−246=94点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0018","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"4回のテストの平均は 73点。5回の平均を 75点 にするには、5回目に何点とればよいですか。","ans":["83"],"unit_label":"点","h1":"なりたい合計(75×5)から今の合計(73×4)を引く。","h2":"75×5−73×4","exp":"375−292=83点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0019","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"これまでのテストの平均は 64点。次のテストで 94点 をとると、平均がちょうど 70点 になります。これまでに何回テストを受けましたか。","ans":["4"],"unit_label":"回","h1":"94点は平均70より24点多い。この24点を、今までの回数に6点ずつ配ると考えよう(70−64=6)。","h2":"(94−70)÷(70−64)","exp":"24÷6=4回。たしかめ: 64×4=256、256+94=350、350÷5=70点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0020","unit":"平均算","kai":null,"level":"共","cat":"レベルアップ","q":"男子15人の平均は 60点、女子10人の平均は 65点。クラス25人全体の平均は何点ですか。","ans":["62"],"unit_label":"点","h1":"それぞれの合計を出してから、25でわるよ。","h2":"(60×15+65×10)÷25","exp":"900+650=1550。1550÷25=62点。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0021","unit":"小数の割り算","kai":null,"level":"共","cat":"とりこぼし","q":"3.6 ÷ 0.4 =","ans":["9"],"unit_label":"","h1":"わる数を整数に。両方を10倍して 36÷4 にしよう。","h2":"36÷4","exp":"3.6÷0.4=36÷4=9。","src":"v1_bank","errType":"計算"},
+    {"id":"M0022","unit":"小数のかけ算","kai":null,"level":"共","cat":"とりこぼし","q":"12.5 × 8 =","ans":["100"],"unit_label":"","h1":"12.5は「8個で100」になる数。125×8を計算して小数点を打ってもOK。","h2":"125×8=1000 → 100","exp":"12.5×8=100。","src":"v1_bank","errType":"計算"},
+    {"id":"M0023","unit":"逆算","kai":null,"level":"共","cat":"とりこぼし","q":"□ × 4 − 6 = 30 のとき、□はいくつ?","ans":["9"],"unit_label":"","h1":"逆算はうしろから。まず「−6する前」は 30+6。","h2":"(30+6)÷4","exp":"36÷4=9。","src":"v1_bank","errType":"計算"},
+    {"id":"M0024","unit":"逆算","kai":null,"level":"共","cat":"とりこぼし","q":"48 ÷ (□ + 2) = 6 のとき、□はいくつ?","ans":["6"],"unit_label":"","h1":"(□+2)は「48をわって6になる数」。まず 48÷6。","h2":"48÷6−2","exp":"48÷6=8。8−2=6。","src":"v1_bank","errType":"計算"},
+    {"id":"M0025","unit":"逆算","kai":null,"level":"共","cat":"とりこぼし","q":"(17 − □) ÷ 3 = 4 のとき、□はいくつ?","ans":["5"],"unit_label":"","h1":"(17−□)は「3でわって4になる数」。まず 4×3。","h2":"17−4×3","exp":"4×3=12。17−12=5。","src":"v1_bank","errType":"計算"},
+    {"id":"M0026","unit":"分数のたし算","kai":null,"level":"共","cat":"とりこぼし","q":"2/3 + 1/6 = (分数で答えてね。例: 5/6 )","ans":["5/6"],"unit_label":"","h1":"分母を6にそろえよう。2/3 = 4/6 だよ。","h2":"4/6+1/6","exp":"4/6+1/6=5/6。","src":"v1_bank","errType":"計算"},
+    {"id":"M0027","unit":"分数のひき算","kai":null,"level":"共","cat":"とりこぼし","q":"3/4 − 1/2 = (分数で答えてね)","ans":["1/4"],"unit_label":"","h1":"分母を4にそろえよう。1/2 = 2/4。","h2":"3/4−2/4","exp":"3/4−2/4=1/4。","src":"v1_bank","errType":"計算"},
+    {"id":"M0028","unit":"小数と分数","kai":null,"level":"共","cat":"とりこぼし","q":"0.25 を分数になおすと? (約分してね)","ans":["1/4"],"unit_label":"","h1":"0.25 = 25/100。25でわって約分しよう。","h2":"25/100=1/4","exp":"0.25=25/100=1/4。","src":"v1_bank","errType":"概念混同"},
+    {"id":"M0029","unit":"文章題(単価)","kai":null,"level":"共","cat":"とりこぼし","q":"1mが 120円 のリボンを 3.5m 買います。代金は何円ですか。","ans":["420"],"unit_label":"円","h1":"代金 = 1mのねだん × 長さ。","h2":"120×3.5","exp":"120×3.5=420円。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0030","unit":"和差算","kai":null,"level":"共","cat":"とりこぼし","q":"2つの数の和は 50、差は 10 です。大きいほうの数はいくつですか。","ans":["30"],"unit_label":"","h1":"和差算! 大きいほう = (和+差)÷2。線分図をかこう。","h2":"(50+10)÷2","exp":"(50+10)÷2=30。小さいほうは20。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0031","unit":"分配算","kai":null,"level":"共","cat":"とりこぼし","q":"大小2つの数の和は 72 で、大きい数は小さい数の 2倍 です。小さい数はいくつですか。","ans":["24"],"unit_label":"","h1":"小さい数を①とすると、大きい数は②。あわせて③=72。","h2":"72÷3","exp":"72÷(1+2)=24。大きい数は48。","src":"v1_bank","errType":"書ける誤答"},
+    {"id":"M0032","unit":"小数の割り算","kai":null,"level":"共","cat":"とりこぼし","q":"7.2 ÷ 0.9 =","ans":["8"],"unit_label":"","h1":"両方を10倍して 72÷9 に。","h2":"72÷9","exp":"7.2÷0.9=72÷9=8。","src":"v1_bank","errType":"計算"}
+  ]
+}
+`;
+/*==BANK_END==*/
+
+/*==SKIN_START==*/
+const SKIN_JSON_RAW = `
+{
+  "skinVersion": "map_japan_2026_07",
+  "title": "さんすうクエスト 日本一周",
+  "colors": { "bg": "#EEF4FB", "ink": "#26324B", "accent": "#FF8A3D",
+              "ok": "#2FBF8F", "ng": "#F26D6D", "star": "#FFC53D" },
+  "praise": ["やったね!", "すごい!", "その調子!", "ナイス!", "かんぺき!", "天才かも!?"],
+  "cheer": ["おしい! 解説を読んでもう一度チャレンジだ。", "だいじょうぶ、まちがいは宝物。", "式を書けたならOK。次は答えまでつなげよう!"],
+  "hintPraise": "ヒントを使えたのもナイス判断!",
+  "map": {
+    "type": "journey",
+    "nodes": [
+      {"name":"北海道","emoji":"🐄"}, {"name":"青森","emoji":"🍎"}, {"name":"岩手","emoji":"🌰"},
+      {"name":"秋田","emoji":"🌾"}, {"name":"宮城","emoji":"🐟"}, {"name":"山形","emoji":"🍒"},
+      {"name":"福島","emoji":"🍑"}, {"name":"茨城","emoji":"🥬"}, {"name":"栃木","emoji":"🍓"},
+      {"name":"群馬","emoji":"♨️"}, {"name":"埼玉","emoji":"🥕"}, {"name":"千葉","emoji":"🥜"},
+      {"name":"東京","emoji":"🗼"}, {"name":"神奈川","emoji":"⛵"}, {"name":"新潟","emoji":"🍙"},
+      {"name":"富山","emoji":"🦐"}, {"name":"石川","emoji":"🦀"}, {"name":"福井","emoji":"🦕"},
+      {"name":"山梨","emoji":"🍇"}, {"name":"長野","emoji":"🍎"}, {"name":"岐阜","emoji":"🏯"},
+      {"name":"静岡","emoji":"🍵"}, {"name":"愛知","emoji":"🚗"}, {"name":"三重","emoji":"🦪"},
+      {"name":"滋賀","emoji":"🌊"}, {"name":"京都","emoji":"⛩️"}, {"name":"大阪","emoji":"🐙"},
+      {"name":"兵庫","emoji":"🐮"}, {"name":"奈良","emoji":"🦌"}, {"name":"和歌山","emoji":"🍊"},
+      {"name":"鳥取","emoji":"🍈"}, {"name":"島根","emoji":"⛩️"}, {"name":"岡山","emoji":"🍑"},
+      {"name":"広島","emoji":"🦪"}, {"name":"山口","emoji":"🐡"}, {"name":"徳島","emoji":"🌊"},
+      {"name":"香川","emoji":"🍜"}, {"name":"愛媛","emoji":"🍊"}, {"name":"高知","emoji":"🐟"},
+      {"name":"福岡","emoji":"🍜"}, {"name":"佐賀","emoji":"🍈"}, {"name":"長崎","emoji":"🐋"},
+      {"name":"熊本","emoji":"🐴"}, {"name":"大分","emoji":"♨️"}, {"name":"宮崎","emoji":"🐔"},
+      {"name":"鹿児島","emoji":"🌋"}, {"name":"沖縄","emoji":"🌺"}
+    ],
+    "stepPerCorrect": 1,
+    "goalMessage": "日本一周たっせい!! ゴールの沖縄に到着だ🌺"
+  },
+  "titles": [
+    {"cond": "noHintStreak3", "name": "そろばん侍"},
+    {"cond": "hintCorrect5", "name": "軍師"},
+    {"cond": "revengeWin", "name": "リベンジャー"},
+    {"cond": "perfectStage", "name": "パーフェクト勇者"},
+    {"cond": "totalCorrect50", "name": "旅の達人"},
+    {"cond": "totalCorrect100", "name": "日本一周マスター"}
+  ]
+}
+`;
+/*==SKIN_END==*/
+
+/* ---------- 内蔵デフォルト(BANK/SKINが壊れていた場合の緊急用) ---------- */
+const DEFAULT_BANK = {
+  bankVersion: "fallback", subject: "M",
+  questions: [
+    {id:"F0001",unit:"たし算",kai:null,level:"基",q:"12 + 8 =",ans:["20"],unit_label:"",h1:"位をそろえてたそう。",h2:"12+8",exp:"12+8=20。",src:"fallback",errType:"計算"},
+    {id:"F0002",unit:"ひき算",kai:null,level:"基",q:"30 − 12 =",ans:["18"],unit_label:"",h1:"くり下がりに注意。",h2:"30−12",exp:"30−12=18。",src:"fallback",errType:"計算"},
+    {id:"F0003",unit:"かけ算",kai:null,level:"基",q:"7 × 6 =",ans:["42"],unit_label:"",h1:"7の段。",h2:"7×6",exp:"7×6=42。",src:"fallback",errType:"計算"},
+    {id:"F0004",unit:"わり算",kai:null,level:"基",q:"48 ÷ 6 =",ans:["8"],unit_label:"",h1:"6の段でさがそう。",h2:"48÷6",exp:"48÷6=8。",src:"fallback",errType:"計算"}
+  ]
+};
+const DEFAULT_SKIN = {
+  skinVersion:"fallback", title:"さんすうクエスト",
+  colors:{bg:"#EEF4FB",ink:"#26324B",accent:"#FF8A3D",ok:"#2FBF8F",ng:"#F26D6D",star:"#FFC53D"},
+  praise:["やったね!","すごい!"], cheer:["おしい!もう一度チャレンジ。"],
+  hintPraise:"ヒントを使えたのもナイス判断!",
+  map:{type:"journey", nodes:[{name:"スタート",emoji:"🚩"},{name:"ゴール",emoji:"🏁"}], stepPerCorrect:1, goalMessage:"ゴール!"},
+  titles:[]
+};
+
+/* ---------- BANK/SKIN 読み込み + バリデーション ---------- */
+function validateBank(b){
+  return !!(b && Array.isArray(b.questions) && b.questions.length>0 &&
+    b.questions.every(q=>q && q.id && q.q && Array.isArray(q.ans) && q.ans.length>0));
+}
+function validateSkin(s){
+  return !!(s && s.colors && Array.isArray(s.praise) && Array.isArray(s.cheer) &&
+    s.map && Array.isArray(s.map.nodes) && s.map.nodes.length>0 && Array.isArray(s.titles));
+}
+
+let BUILTIN_BANK, SKIN;
+let fallbackWarnings = [];
+try{
+  const parsed = JSON.parse(BANK_JSON_RAW);
+  if(validateBank(parsed)) BUILTIN_BANK = parsed;
+  else throw new Error("bank validation failed");
+}catch(e){
+  BUILTIN_BANK = DEFAULT_BANK;
+  fallbackWarnings.push("問題バンクの読み込みに失敗したため、内蔵の簡易バンクで起動しています。");
+}
+try{
+  const parsed = JSON.parse(SKIN_JSON_RAW);
+  if(validateSkin(parsed)) SKIN = parsed;
+  else throw new Error("skin validation failed");
+}catch(e){
+  SKIN = DEFAULT_SKIN;
+  fallbackWarnings.push("スキンの読み込みに失敗したため、内蔵の簡易スキンで起動しています。");
+}
+
+// localStorage可否チェック(プライベートモード等での例外に備える)
+let storageAvailable = true;
+try{
+  localStorage.setItem("__quest_probe__", "1");
+  localStorage.removeItem("__quest_probe__");
+}catch(e){ storageAvailable = false; }
+
+const BANK_STORAGE_KEY = "quest_bank_" + BUILTIN_BANK.subject;
+
+// 端末に保存された更新バンクがあれば採用(壊れていれば内蔵にフォールバック)。進捗(セーブコード)は引き続きlocalStorageに頼らない
+let BANK = BUILTIN_BANK;
+let bankSource = "builtin"; // "builtin" | "local"
+if(storageAvailable){
+  try{
+    const raw = localStorage.getItem(BANK_STORAGE_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      if(validateBank(parsed) && parsed.subject === BUILTIN_BANK.subject){
+        BANK = parsed;
+        bankSource = "local";
+      } else {
+        fallbackWarnings.push("保存されていたバンクが壊れていたため、内蔵バンクで起動しています。");
+      }
+    }
+  }catch(e){
+    fallbackWarnings.push("保存されていたバンクの読み込みに失敗したため、内蔵バンクで起動しています。");
+  }
+}
+
+// id昇順の全問題 / 出題対象(retired除外) / 間口一覧。バンク更新時に再計算するためlet
+let ALL_QS, LIVE_QS, CATS;
+function deriveFromBank(){
+  // id昇順の全問題。セーブコードはretired含む全問を対象(=問題引退で過去コードが壊れない)
+  ALL_QS = [...BANK.questions].sort((a,b)=> a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+  // 出題対象(retired除外)
+  LIVE_QS = ALL_QS.filter(q=>!q.retired);
+  // 間口(カテゴリ)一覧: バンクのcats定義のうち、実問題が存在するもののみ
+  CATS = (Array.isArray(BANK.cats) ? BANK.cats : []).filter(c=>LIVE_QS.some(q=>q.cat===c.cat));
+}
+deriveFromBank();
+
+// スキン色をCSS変数へ適用(月替わりテーマ対応)
+(function applySkinColors(){
+  const r = document.documentElement.style, c = SKIN.colors || {};
+  if(c.bg) r.setProperty("--paper", c.bg);
+  if(c.ink) r.setProperty("--ink", c.ink);
+  if(c.accent) r.setProperty("--orange", c.accent);
+  if(c.ok) r.setProperty("--mint", c.ok);
+  if(c.ng) r.setProperty("--coral", c.ng);
+  if(c.star) r.setProperty("--star", c.star);
+})();
+
+/* ---------- おうちの人メニュー: バンク貼り付け更新のバリデーション ---------- */
+// 全ての正答候補が数値/分数のときだけ数字。それ以外(漢字・かな回答)はテキスト判定
+// (isNumericQuestionの実体は後方で定義。関数宣言なのでホイスティングによりここから参照可)
+function validateBankPaste(text){
+  let candidate;
+  try{ candidate = JSON.parse(text); }
+  catch(e){ return { ok:false, reason:"JSONとして読み取れませんでした。貼り付け内容を確認してください。" }; }
+
+  if(!candidate || !Array.isArray(candidate.questions) || candidate.questions.length===0){
+    return { ok:false, reason:"questions配列が見つかりません。" };
+  }
+  if(candidate.subject !== BUILTIN_BANK.subject){
+    return { ok:false, reason:`subjectが一致しません(このアプリは "${BUILTIN_BANK.subject}" 用です)。` };
+  }
+  const idRe = new RegExp("^" + BUILTIN_BANK.subject + "\\d{4}$");
+  const ids = candidate.questions.map(q=>q && q.id);
+  for(const q of candidate.questions){
+    if(!q || !q.id || !idRe.test(q.id)){
+      return { ok:false, reason:`不正なid形式があります: ${q && q.id}` };
+    }
+    if(!q.cat){
+      return { ok:false, reason:`catが未設定の問題があります(id: ${q.id})。` };
+    }
+    if(!Array.isArray(q.ans) || q.ans.length===0){
+      return { ok:false, reason:`ansが未設定の問題があります(id: ${q.id})。` };
+    }
+    if(!isNumericQuestion(q) && q.ans.length<2){
+      return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。` };
+    }
+  }
+  const idSet = new Set(ids);
+  if(idSet.size !== ids.length){
+    return { ok:false, reason:"idが重複しています。" };
+  }
+  const existingIds = ALL_QS.map(q=>q.id);
+  const missing = existingIds.filter(id=>!idSet.has(id));
+  if(missing.length){
+    return { ok:false, reason:`既存のidが欠落しています(削除は禁止・外したい場合はretiredで対応): ${missing.slice(0,5).join("、")}${missing.length>5?" 他":""}` };
+  }
+  const numSuffix = id => parseInt(id.slice(BUILTIN_BANK.subject.length), 10);
+  const existingMax = existingIds.length ? Math.max(...existingIds.map(numSuffix)) : 0;
+  const newIds = ids.filter(id=>!existingIds.includes(id));
+  const badNew = newIds.filter(id=>numSuffix(id) <= existingMax);
+  if(badNew.length){
+    return { ok:false, reason:`新規idは既存の続き番号にしてください(番号が既存以下のid: ${badNew.slice(0,5).join("、")})。` };
+  }
+  return { ok:true, bank:candidate };
+}
+
+/* ---------- Base32 セーブコード(V2: バンク成長対応 / V1: 旧形式の互換読み込み) ---------- */
+const B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+function bitsFromInt(n, len){ return (n>>>0).toString(2).padStart(len, "0"); }
+
+function checksum(str){
+  let sum = 0;
+  for(const ch of str) sum += ch.charCodeAt(0);
+  return B32[sum % 32];
+}
+function pad2(n){ return String(n).padStart(2,"0"); }
+function todayDateStr(){
+  const d = new Date();
+  return pad2(d.getFullYear()%100) + pad2(d.getMonth()+1) + pad2(d.getDate());
+}
+function parseDateStr(dateStr){
+  const yy = parseInt(dateStr.slice(0,2),10), mm = parseInt(dateStr.slice(2,4),10)-1, dd = parseInt(dateStr.slice(4,6),10);
+  if(mm<0||mm>11||dd<1||dd>31) return null;
+  return new Date(2000+yy, mm, dd);
+}
+
+// --- V1形式(問題数を固定前提。旧コードの互換読み込み専用。新規発行はしない) ---
+function packStateV1(boxes, xp){
+  let bits = "";
+  ALL_QS.forEach(q=>{ bits += bitsFromInt(boxes[q.id] ?? 2, 2); });
+  bits += bitsFromInt(Math.min(xp, 4095), 12);
+  while(bits.length % 5 !== 0) bits += "0";
+  let out = "";
+  for(let i=0;i<bits.length;i+=5){ out += B32[parseInt(bits.substr(i,5),2)]; }
+  return out;
+}
+function unpackStateV1(str){
+  let bits = "";
+  for(const ch of str.toUpperCase()){
+    const idx = B32.indexOf(ch);
+    if(idx < 0) throw new Error("invalid char");
+    bits += bitsFromInt(idx, 5);
+  }
+  const needed = ALL_QS.length*2 + 12;
+  if(bits.length < needed) throw new Error("too short");
+  bits = bits.slice(0, needed);
+  const boxes = {};
+  ALL_QS.forEach((q,i)=>{ boxes[q.id] = parseInt(bits.substr(i*2,2),2); });
+  const xp = parseInt(bits.substr(ALL_QS.length*2, 12), 2);
+  return { boxes, xp };
+}
+
+// --- V2形式(問題数を10bitで持つ。バンクが増えても古いコードを壊さない) ---
+function packStateV2(boxes, xp){
+  const n = ALL_QS.length;
+  let bits = bitsFromInt(n, 10);
+  ALL_QS.forEach(q=>{ bits += bitsFromInt(boxes[q.id] ?? 2, 2); });
+  bits += bitsFromInt(Math.min(xp, 4095), 12);
+  while(bits.length % 5 !== 0) bits += "0";
+  let out = "";
+  for(let i=0;i<bits.length;i+=5){ out += B32[parseInt(bits.substr(i,5),2)]; }
+  return out;
+}
+function unpackStateV2(str){
+  let bits = "";
+  for(const ch of str.toUpperCase()){
+    const idx = B32.indexOf(ch);
+    if(idx < 0) throw new Error("invalid char");
+    bits += bitsFromInt(idx, 5);
+  }
+  if(bits.length < 10) throw new Error("too short");
+  const n = parseInt(bits.substr(0,10), 2);
+  const needed = 10 + n*2 + 12;
+  if(bits.length < needed) throw new Error("too short");
+  bits = bits.slice(0, needed);
+  const codeBoxes = [];
+  for(let i=0;i<n;i++) codeBoxes.push(parseInt(bits.substr(10+i*2,2),2));
+  const xp = parseInt(bits.substr(10+n*2,12), 2);
+  return { n, codeBoxes, xp };
+}
+// V2のcodeBoxes(コード作成時点でのid昇順n件)を、現在のALL_QSへ写像。
+// 増えた分(現在の問題数 - n)は箱2(未出題)で初期化 = バンクが育っても進捗が消えない
+function applyV2Code(decoded){
+  if(decoded.n > ALL_QS.length) return { error: "bank_old" };
+  const boxes = {};
+  ALL_QS.forEach((q,i)=>{ boxes[q.id] = i < decoded.n ? decoded.codeBoxes[i] : 2; });
+  return { boxes, xp: decoded.xp };
+}
+
+function makeSaveCode(boxes, xp){
+  const state = packStateV2(boxes, xp);
+  const chk = checksum(state);
+  return `V2-${todayDateStr()}-${state}${chk}`;
+}
+
+function parseSaveCode(raw){
+  const code = (raw||"").trim().toUpperCase();
+
+  let m = code.match(/^V2-(\d{6})-([A-Z2-7]+)$/);
+  if(m){
+    const dateStr = m[1], body = m[2];
+    if(body.length < 2) return null;
+    const state = body.slice(0,-1), chk = body.slice(-1);
+    if(checksum(state) !== chk) return null;
+    let decoded;
+    try{ decoded = unpackStateV2(state); }catch(e){ return null; }
+    const applied = applyV2Code(decoded);
+    if(applied.error) return { error: applied.error };
+    const savedDate = parseDateStr(dateStr);
+    if(!savedDate) return null;
+    return { boxes: applied.boxes, xp: applied.xp, savedDate, version: "V2" };
+  }
+
+  // 旧V1コードの互換読み込み(バンク更新前に発行されたコードの移行用)。
+  // 現在の問題数を前提にチェックサム照合するベストエフォート方式(仕様上の既定動作)
+  m = code.match(/^V1-(\d{6})-([A-Z2-7]+)$/);
+  if(m){
+    const dateStr = m[1], body = m[2];
+    if(body.length < 2) return null;
+    const state = body.slice(0,-1), chk = body.slice(-1);
+    if(checksum(state) !== chk) return null;
+    let decoded;
+    try{ decoded = unpackStateV1(state); }catch(e){ return null; }
+    const savedDate = parseDateStr(dateStr);
+    if(!savedDate) return null;
+    return { boxes: decoded.boxes, xp: decoded.xp, savedDate, version: "V1" };
+  }
+
+  return null;
+}
+
+/* ---------- ライトナー式 復習スケジュール ---------- */
+const INTERVAL_DAYS = {0:0, 1:3, 2:7, 3:21};
+function daysSince(savedDate){
+  const now = new Date();
+  const a = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const b = new Date(savedDate.getFullYear(), savedDate.getMonth(), savedDate.getDate());
+  return Math.floor((a-b) / 86400000);
+}
+function isDue(box, ds){ return ds >= (INTERVAL_DAYS[box] ?? 0); }
+
+function shuffle(arr){
+  const b=[...arr];
+  for(let i=b.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [b[i],b[j]]=[b[j],b[i]]; }
+  return b;
+}
+
+function buildSession(boxes, savedDate, cat){
+  const ds = daysSince(savedDate);
+  const inCat = q => !cat || q.cat === cat;
+  const pool0=[], due1=[], due2=[], due3=[];
+  LIVE_QS.forEach(q=>{
+    const box = boxes[q.id] ?? 2;
+    if(box === 0) pool0.push(q);                       // リベンジは間口に関係なく候補
+    else if(box === 1 && isDue(1, ds) && inCat(q)) due1.push(q);
+    else if(box === 2 && isDue(2, ds) && inCat(q)) due2.push(q);
+    else if(box === 3 && isDue(3, ds) && inCat(q)) due3.push(q); // 定着問題も21日で再出題
+  });
+  // リベンジ(箱0)は必ず混ぜる: 間口選択時は最大2、おまかせ時は最大4
+  const revCap = cat ? 2 : 4;
+  const review = [...shuffle(pool0).slice(0, revCap), ...shuffle(due1), ...shuffle(due2), ...shuffle(due3)].slice(0, 4);
+  const revengeIds = new Set(pool0.map(q=>q.id));
+  const usedIds = new Set(review.map(q=>q.id));
+  const catPool = shuffle(LIVE_QS.filter(q=>!usedIds.has(q.id) && inCat(q)));
+  const anyPool = shuffle(LIVE_QS.filter(q=>!usedIds.has(q.id) && !inCat(q)));
+  const needed = Math.max(0, 8 - review.length);
+  const fill = [...catPool, ...anyPool].slice(0, needed); // 間口内で足りなければ全体から補完
+  const session = shuffle([...review, ...fill]).map(q=>({...q, _revenge: revengeIds.has(q.id)}));
+  return session;
+}
+
+/* ---------- 入力モード判定・正規化(答え合わせ用) ---------- */
+// 全ての正答候補が数値/分数のときだけ数字キーパッドモード。それ以外(漢字・かな回答)はテキスト入力モード
+function isNumericQuestion(q){
+  return q.ans.every(a => /^-?\d+(\.\d+)?$/.test(a) || /^\d+\/\d+$/.test(a));
+}
+function normZen(s){
+  return s.replace(/[０-９．／]/g, c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
+}
+function norm(s, numeric){
+  const z = normZen(s);
+  if(numeric){
+    return z.replace(/[\s。、点円個こ回人gkmcページ]/g,"").trim();
+  }
+  // テキストモード: 空白・句読点を除去し、カタカナ→ひらがなに折り畳んで比較
+  // (「すいさんかカルシウム」のようなかな交じり入力を正解にするため。答え側にも同じ正規化がかかる)
+  return z.replace(/[\s。、！？]/g,"")
+          .replace(/[ァ-ヶ]/g, c=>String.fromCharCode(c.charCodeAt(0)-0x60))
+          .trim();
+}
+
+/* ---------- 称号判定 ---------- */
+function condMet(cond, stats, totalXp){
+  if(cond.startsWith("noHintStreak")) return stats.noHintMaxStreak >= parseInt(cond.replace("noHintStreak",""),10);
+  if(cond.startsWith("hintCorrect")) return stats.hintCorrectCount >= parseInt(cond.replace("hintCorrect",""),10);
+  if(cond === "revengeWin") return stats.revengeWin;
+  if(cond === "perfectStage") return stats.perfectStage;
+  if(cond.startsWith("totalCorrect")) return totalXp >= parseInt(cond.replace("totalCorrect",""),10);
+  return false;
+}
+
+/* ---------- マップ計算 ---------- */
+function nodeIndexForXp(xp){
+  const nodes = SKIN.map.nodes;
+  const step = SKIN.map.stepPerCorrect || 1;
+  return Math.min(Math.floor(xp / step), nodes.length - 1);
+}
+
+/* =====================================================================
+   アプリ状態・画面遷移
+   ===================================================================== */
+const app = document.getElementById("app");
+
+let G = {
+  boxes: {},          // {questionId: 0-3}
+  xp: 0,               // 累計せいかい数
+  savedDate: new Date() // 直近セーブ日(未セーブ時は今日=待ち時間なし)
+};
+// バンク更新・成長時にも呼び直す: 未知のidだけ箱2で初期化し、既存の進捗は保持
+function ensureBoxesForAllQs(){
+  ALL_QS.forEach(q=>{ if(!(q.id in G.boxes)) G.boxes[q.id] = 2; });
+}
+ensureBoxesForAllQs();
+
+let quiz = null; // 現在のクイズセッション状態
+
+function warnBannerHtml(){
+  if(!fallbackWarnings.length) return "";
+  return `<div class="warn-banner">⚠️ ${fallbackWarnings.join("<br>")}</div>`;
+}
+
+/* ---------- ホーム画面 ---------- */
+function renderHome(msg){
+  quiz = null;
+  const idx = nodeIndexForXp(G.xp);
+  const nodes = SKIN.map.nodes;
+  const node = nodes[idx];
+  const atGoal = idx >= nodes.length - 1;
+  const pct = Math.round((idx/(nodes.length-1))*100);
+  const nextNode = nodes[Math.min(idx+1, nodes.length-1)];
+
+  app.innerHTML = `
+    ${warnBannerHtml()}
+    <div class="home-title">🧮 ${SKIN.title || "さんすうクエスト"}</div>
+    <div class="home-sub">1かい 8もん。ヒントを使ってもOK!<br>ノートに書いてから答えるのがルールだよ ✏️</div>
+
+    <div class="map-card">
+      <div class="map-label">いま、たびの場所</div>
+      <div class="map-here"><div class="map-emoji">${node.emoji}</div><div class="map-name">${node.name}</div></div>
+      <div class="map-progress-wrap">
+        <div class="map-bar-track"><div class="map-bar-fill" style="width:${pct}%"></div></div>
+        <div class="map-progress-text"><span>${atGoal ? "🎉 日本一周たっせい!" : `つぎは ${nextNode.emoji} ${nextNode.name}`}</span><span>${idx}/${nodes.length-1}</span></div>
+      </div>
+      ${atGoal ? `<div class="map-goal">${SKIN.map.goalMessage}</div>` : ""}
+    </div>
+
+    <div class="code-card">
+      <div class="code-label">🔑 前回のつづきコードがあれば入力してね</div>
+      <div class="code-row">
+        <input type="text" class="code-input" id="codeInput" placeholder="V1-260702-..." autocapitalize="characters">
+        <button class="code-btn" id="codeBtn">読み込む</button>
+      </div>
+      ${msg ? `<div class="code-msg ${msg.ok?'ok':'ng'}">${msg.text}</div>` : ""}
+    </div>
+
+    <div class="doors-label">きょうは どれにする?</div>
+    ${CATS.map(c=>`<button class="stage-btn" data-cat="${c.cat}">
+        <div class="stage-name">${c.icon||"⭐"} ${c.cat}</div>
+        <div class="stage-desc">${c.desc||""}</div>
+      </button>`).join("")}
+    <button class="stage-btn omakase" data-cat="">
+      <div class="stage-name">🎲 おまかせミックス</div>
+      <div class="stage-desc">復習もぜんぶまぜて8問。まよったらこれ!</div>
+    </button>
+
+    <div class="home-note">きろくは残らないよ。おわったらセーブコードをメモしてね。</div>
+    <div class="parent-menu-row"><button class="parent-menu-btn" id="parentMenuBtn">⚙️ おうちの人メニュー</button></div>`;
+
+  app.querySelectorAll(".stage-btn").forEach(b=>b.addEventListener("click", ()=>startQuiz(b.dataset.cat || null)));
+  document.getElementById("parentMenuBtn").addEventListener("click", ()=>renderParentMenu());
+  document.getElementById("codeBtn").addEventListener("click", ()=>{
+    const raw = document.getElementById("codeInput").value;
+    const parsed = parseSaveCode(raw);
+    if(!parsed){
+      renderHome({ok:false, text:"コードがちがうみたい。もういちど確認してね。"});
+      return;
+    }
+    if(parsed.error === "bank_old"){
+      renderHome({ok:false, text:"このコードは今のバンクより新しい問題数を含んでいるみたい。アプリのバンクが古いかも。「⚙️ おうちの人メニュー」から最新バンクを貼り付けてね。"});
+      return;
+    }
+    G.boxes = parsed.boxes; G.xp = parsed.xp; G.savedDate = parsed.savedDate;
+    ensureBoxesForAllQs();
+    renderHome({ok:true, text: "つづきを読み込んだよ!" + (parsed.version==="V1" ? "(古い形式のコードだったけど読み込めたよ)" : "")});
+  });
+}
+
+/* ---------- おうちの人メニュー ---------- */
+function renderParentMenu(msg){
+  quiz = null;
+  app.innerHTML = `
+    <div class="topbar"><button class="quit-btn" id="back">← ホームへ</button></div>
+    <div class="home-title" style="font-size:22px">⚙️ おうちの人メニュー</div>
+    <div class="home-sub">バンク(問題データ)の更新はここから。子どもの画面には出てきません。</div>
+
+    <div class="map-card">
+      <div class="map-label">いまのバンク</div>
+      <div style="font-size:14px; line-height:1.9;">
+        バージョン: <b>${(BANK.bankVersion||"-")}</b><br>
+        問題数: <b>${ALL_QS.length}</b>問(うち有効 ${LIVE_QS.length}問)<br>
+        保存状態: <b>${bankSource === "local" ? "端末に保存された更新バンク" : "内蔵バンク"}</b>
+      </div>
+    </div>
+
+    ${!storageAvailable ? `<div class="warn-banner">⚠️ この端末/ブラウザでは保存ができないようです。更新は今回のセッションのみ有効になります(アプリを閉じると消えるので、次回また貼り付けてね)。</div>` : ""}
+
+    <div class="code-card">
+      <div class="code-label">📂 バンクJSONファイルを開く(かんたん・おすすめ)</div>
+      <input type="file" id="bankFile" accept=".json,application/json,text/plain" class="bank-file">
+      <div class="code-label" style="margin-top:14px;">📋 またはJSON全文を貼り付け</div>
+      <textarea id="bankPaste" class="bank-paste" rows="8" placeholder="ここにJSON全文を貼り付け"></textarea>
+      <div class="code-row" style="margin-top:10px;">
+        <button class="code-btn" id="applyBankBtn" style="flex:1;">更新する</button>
+      </div>
+      ${msg ? `<div class="code-msg ${msg.ok?'ok':'ng'}">${msg.text}</div>` : ""}
+    </div>
+
+    <button class="reset-bank-btn" id="resetBankBtn">🔄 内蔵バンクに戻す</button>`;
+
+  document.getElementById("back").addEventListener("click", ()=>renderHome());
+  const doApply = (text)=>{
+    const result = validateBankPaste(text);
+    if(!result.ok){
+      renderParentMenu({ok:false, text:"❌ 更新できませんでした: " + result.reason});
+      return;
+    }
+    BANK = result.bank;
+    deriveFromBank();
+    ensureBoxesForAllQs();
+    let saved = false;
+    if(storageAvailable){
+      try{ localStorage.setItem(BANK_STORAGE_KEY, JSON.stringify(BANK)); saved = true; bankSource = "local"; }
+      catch(e){ saved = false; }
+    }
+    renderParentMenu({ok:true, text: saved
+      ? "✅ 更新しました!(端末に保存されました)"
+      : "✅ 今回のセッションで更新しました(保存はされていません。次回はまた読み込んでね)"});
+  };
+  document.getElementById("applyBankBtn").addEventListener("click", ()=>doApply(document.getElementById("bankPaste").value));
+  document.getElementById("bankFile").addEventListener("change", (ev)=>{
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    const rd = new FileReader();
+    rd.onload = ()=>doApply(String(rd.result));
+    rd.onerror = ()=>renderParentMenu({ok:false, text:"❌ ファイルを読み込めませんでした。"});
+    rd.readAsText(f);
+  });
+  document.getElementById("resetBankBtn").addEventListener("click", ()=>{
+    BANK = BUILTIN_BANK;
+    deriveFromBank();
+    ensureBoxesForAllQs();
+    if(storageAvailable){ try{ localStorage.removeItem(BANK_STORAGE_KEY); }catch(e){} }
+    bankSource = "builtin";
+    renderParentMenu({ok:true, text:"🔄 内蔵バンクに戻しました。"});
+  });
+}
+
+/* ---------- クイズ画面 ---------- */
+function startQuiz(cat){
+  const qs = buildSession(G.boxes, G.savedDate, cat || null);
+  const startIdx = nodeIndexForXp(G.xp);
+  quiz = {
+    qs, cat: cat || null, idx:0, input:"", hint:0, answered:false,
+    results:[], combo:0, best:0,
+    startXp: G.xp, startNodeIdx: startIdx,
+    noHintStreak:0, noHintMaxStreak:0, hintCorrectCount:0, revengeWin:false
+  };
+  renderQ();
+}
+
+function renderQ(){
+  const s = quiz, q = s.qs[s.idx];
+  s.numeric = isNumericQuestion(q);
+  const rail = s.qs.map((_,i)=>{
+    if(i < s.results.length) return `<span class="${s.results[i].ok?'on':'ng'}">${s.results[i].ok?'⭐':'💧'}</span>`;
+    return `<span>⭐</span>`;
+  }).join("");
+  const nodes = SKIN.map.nodes;
+  const curIdx = nodeIndexForXp(G.xp);
+  const pct = Math.round((curIdx/(nodes.length-1))*100);
+
+  app.innerHTML = `
+    <div class="topbar">
+      <button class="quit-btn" id="quit">← やめる</button>
+      <div class="journey-mini">
+        <span class="em">${nodes[curIdx].emoji}</span>
+        <div class="journey-mini-track"><div class="journey-mini-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="combo">${s.combo>=2?`🔥${s.combo}れんぞく!`:""}</div>
+    </div>
+    <div class="rail">${rail}</div>
+    <div class="qcard">
+      ${q._revenge ? `<div class="revenge-badge">🔥 リベンジ問題!</div>` : ""}
+      <div class="qnum">だい ${s.idx+1} もん / ${s.qs.length}もん</div>
+      <div class="qtext">${q.q}</div>
+      <div class="answer-row">
+        ${quiz.numeric
+          ? `<input type="text" class="answer-box" id="ansbox" inputmode="none" autocomplete="off" enterkeyhint="done">`
+          : `<input type="text" class="answer-box answer-input" id="ansbox" placeholder="かんじ・かなで にゅうりょく" autocomplete="off" autocapitalize="off" enterkeyhint="done">`}
+        <div class="unit">${q.unit_label || ""}</div>
+      </div>
+      <div class="write-tip">✏️ ${SKIN.writeTip || "まずノートに式を書こう。それが「さいしょの一手」!"}</div>
+      <div class="hint-area" id="hintarea">
+        <button class="hint-btn" id="hintbtn">💡 ヒントを見る</button>
+      </div>
+      <div id="fbarea"></div>
+    </div>
+    ${quiz.numeric ? `<div class="keypad" id="pad"></div>` : `<button class="next-btn submit-btn" id="submitBtn" disabled>こたえあわせ</button>`}`;
+  document.getElementById("quit").addEventListener("click", ()=>renderHome());
+  document.getElementById("hintbtn").addEventListener("click", showHint);
+
+  // 数字・テキスト共通: 物理キーボード(PC)から直接入力できるようにinputイベントを購読
+  const input = document.getElementById("ansbox");
+  input.addEventListener("input", ()=>{ quiz.input = input.value; updateAns(); });
+  input.addEventListener("keydown", (e)=>{ if(e.key==="Enter" && quiz.input && quiz.input.trim() && !quiz.answered) check(); });
+
+  if(quiz.numeric){
+    renderPad();
+    updateAns();
+  } else {
+    document.getElementById("submitBtn").addEventListener("click", check);
+    input.focus();
+  }
+}
+
+function renderPad(){
+  const pad = document.getElementById("pad");
+  const keys = ["7","8","9","⌫","4","5","6","/","1","2","3",".","0"];
+  pad.innerHTML = keys.map(k=>`<button class="key ${["⌫","/","."].includes(k)?"fn":""}" data-k="${k}">${k}</button>`).join("")
+    + `<button class="key go" id="gobtn">こたえあわせ</button>`;
+  pad.querySelectorAll(".key[data-k]").forEach(b=>b.addEventListener("click",()=>tapKey(b.dataset.k)));
+  document.getElementById("gobtn").addEventListener("click", check);
+}
+
+// キーパッドのタップは実際の<input>の値を書き換える(PCからの直接タイプと同じ経路に統一)
+function tapKey(k){
+  if(quiz.answered) return;
+  const input = document.getElementById("ansbox");
+  if(k==="⌫") input.value = input.value.slice(0,-1);
+  else if(input.value.length<8) input.value += k;
+  quiz.input = input.value;
+  updateAns();
+}
+
+function updateAns(){
+  const box = document.getElementById("ansbox");
+  if(!box) return;
+  box.classList.toggle("filled", !!quiz.input);
+  box.disabled = quiz.answered;
+  if(quiz.numeric){
+    const go = document.getElementById("gobtn");
+    if(go) go.disabled = !quiz.input || quiz.answered;
+  } else {
+    const btn = document.getElementById("submitBtn");
+    if(btn) btn.disabled = !quiz.input || !quiz.input.trim() || quiz.answered;
+  }
+}
+
+function showHint(){
+  const q = quiz.qs[quiz.idx];
+  const area = document.getElementById("hintarea");
+  quiz.hint++;
+  const bubbles = [];
+  if(quiz.hint>=1) bubbles.push(`<div class="hint-bubble">💡 <b>考え方</b>: ${q.h1}</div>`);
+  if(quiz.hint>=2) bubbles.push(`<div class="hint-bubble">🧮 <b>式</b>: ${q.h2}</div>`);
+  const btnLabel = quiz.hint===1 ? "💡 もうひとつヒント(式)" : "";
+  area.innerHTML = bubbles.join("") + (btnLabel?`<div style="margin-top:8px"><button class="hint-btn" id="hintbtn">${btnLabel}</button></div>`:"");
+  const nb = document.getElementById("hintbtn");
+  if(nb) nb.addEventListener("click", showHint);
+}
+
+function check(){
+  const s = quiz, q = s.qs[s.idx];
+  if(s.answered || !s.input) return;
+  s.answered = true;
+  const numeric = isNumericQuestion(q);
+  const okSet = new Set(q.ans.map(a=>norm(a, numeric)));
+  const ok = okSet.has(norm(s.input, numeric));
+  s.results.push({q, ok, my:s.input, hintUsed:s.hint});
+
+  // ライトナー箱の更新
+  const curBox = G.boxes[q.id] ?? 2;
+  G.boxes[q.id] = ok ? Math.min(curBox+1, 3) : 0;
+  if(ok) G.xp = Math.min(G.xp+1, 4095);
+
+  // セッション内スタッツ
+  if(ok){
+    s.combo++; s.best=Math.max(s.best,s.combo);
+    if(s.hint===0){ s.noHintStreak++; s.noHintMaxStreak=Math.max(s.noHintMaxStreak, s.noHintStreak); }
+    else { s.noHintStreak=0; s.hintCorrectCount++; }
+    if(q._revenge) s.revengeWin = true;
+  } else {
+    s.combo=0; s.noHintStreak=0;
+  }
+
+  const fb = document.getElementById("fbarea");
+  const last = s.idx === s.qs.length-1;
+  if(ok){
+    const p = SKIN.praise[Math.floor(Math.random()*SKIN.praise.length)];
+    fb.innerHTML = `<div class="fb ok"><div class="fb-head">⭕ せいかい! ${p}</div>
+      ${s.hint===0?"ノーヒントはえらい!":SKIN.hintPraise}
+      <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
+  }else{
+    const c = SKIN.cheer[Math.floor(Math.random()*SKIN.cheer.length)];
+    fb.innerHTML = `<div class="fb ng"><div class="fb-head">❌ ざんねん…</div>
+      正解は <b>${q.ans[0]}${q.unit_label||""}</b>。<br>📖 ${q.exp}<br>${c}
+      <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
+  }
+  updateAns();
+  document.getElementById("next").addEventListener("click", ()=>{
+    if(last) renderResult();
+    else { s.idx++; s.input=""; s.hint=0; s.answered=false; renderQ(); }
+  });
+  fb.scrollIntoView({behavior:"smooth", block:"end"});
+}
+
+/* ---------- 結果画面 ---------- */
+function renderResult(){
+  const s = quiz;
+  const nOK = s.results.filter(r=>r.ok).length, n = s.results.length;
+  const stars = nOK===n?3 : nOK>=n-2?2 : nOK>=Math.ceil(n/2)?1:0;
+  const emoji = stars===3?"🏆":stars===2?"🎉":stars===1?"💪":"🌱";
+  const title = stars===3?"パーフェクト!!":stars===2?"あと少しで満点!":stars===1?"いいペース!":"ここからスタート!";
+  const misses = s.results.filter(r=>!r.ok);
+  s.perfectStage = (nOK === n);
+
+  // 称号判定
+  const stats = {
+    noHintMaxStreak: s.noHintMaxStreak,
+    hintCorrectCount: s.hintCorrectCount,
+    revengeWin: s.revengeWin,
+    perfectStage: s.perfectStage
+  };
+  const earned = SKIN.titles.filter(t => condMet(t.cond, stats, G.xp));
+
+  // マップ移動
+  const nodes = SKIN.map.nodes;
+  const newIdx = nodeIndexForXp(G.xp);
+  const startIdx = s.startNodeIdx;
+  const moved = newIdx - startIdx;
+  const startNode = nodes[startIdx], newNode = nodes[newIdx];
+  const atGoal = newIdx >= nodes.length - 1;
+
+  // セーブコード発行
+  G.savedDate = new Date();
+  const code = makeSaveCode(G.boxes, G.xp);
+
+  app.innerHTML = `
+    <div class="res-head"><div class="res-emoji">${emoji}</div><div class="res-title">${title}</div></div>
+    <div class="res-score"><b>${nOK}</b> / ${n} もん せいかい</div>
+    <div class="res-stars">${"🌟".repeat(stars)}${"☆".repeat(3-stars)}</div>
+    ${s.best>=3?`<div class="res-score" style="font-size:15px">🔥 さいだい ${s.best}れんぞく正解!</div>`:""}
+
+    <div class="journey-card">
+      <div class="journey-move">${moved>0?`${moved}歩 すすんだ!`:"今回はたびの歩数なし(全問復習ミス0でもOK、また次回!)"}</div>
+      <div class="journey-nodes">
+        <span>${startNode.emoji}</span>
+        ${moved>0?`<span class="journey-arrow">→</span><span>${newNode.emoji}</span>`:""}
+      </div>
+      <div class="journey-newname">いま: ${newNode.name}${atGoal?" 🎉":""}</div>
+      ${atGoal ? `<div class="map-goal" style="margin-top:8px">${SKIN.map.goalMessage}</div>` : ""}
+    </div>
+
+    ${earned.length ? `<div class="title-wrap">${earned.map(t=>`<span class="title-badge">🏅 ${t.name}</span>`).join("")}</div>` : ""}
+
+    <div class="savecode-card">
+      <div class="savecode-label">🔑 きょうのセーブコード(おうちの人にメモしてもらおう)</div>
+      <div class="savecode-text">${code}</div>
+      <div class="savecode-note">次回このコードを入れると、たびの続きと復習の記録がもどるよ。</div>
+    </div>
+
+    ${misses.length?`<div class="review-head">📖 見直しコーナー(ノートで解き直そう)</div>`:""}
+    ${misses.map(r=>`<div class="review">
+        <div class="rq">Q. ${r.q.q}</div>
+        <div class="ra"><span class="miss">きみの答え: ${r.my}</span> → 正解: <b>${r.q.ans[0]}${r.q.unit_label||""}</b><br>${r.q.exp}</div>
+      </div>`).join("")}
+    <div class="res-btns">
+      <button class="retry" id="retry">もう一回 🔁</button>
+      <button class="gohome" id="home">ホームへ</button>
+    </div>`;
+  document.getElementById("retry").addEventListener("click", ()=>startQuiz(s.cat));
+  document.getElementById("home").addEventListener("click", ()=>renderHome());
+}
+
+renderHome();
+</script>
+</body>
+</html>
