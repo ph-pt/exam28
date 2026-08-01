@@ -103,7 +103,14 @@ function sanitizeSvg(raw){
    variant: "q"(出題・解説) / "review"(見直しコーナー。小さめに出す) */
 function svgFigureHtml(q, variant){
   if(!q || !q.svg) return "";
-  const clean = sanitizeSvg(q.svg);
-  if(!clean) return "";
+  let clean = null;
+  try{ clean = sanitizeSvg(q.svg); }
+  catch(e){ clean = null; }
+  if(!clean){
+    /* v4.3 §5.2 エンジン側の防御: パース・描画に失敗しても落とさない。
+       図なしで問題文のみ表示して続行し、気づけるようコンソールに警告を出す */
+    console.warn(`[quest] 図版を描画できませんでした(id: ${q.id})。図なしで表示します。`);
+    return "";
+  }
   return `<div class="qfig ${variant === "review" ? "qfig-sm" : ""}">${clean}</div>`;
 }

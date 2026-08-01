@@ -637,26 +637,79 @@ section("§9-14 図版(SVG)のバリデーション");
      "内部参照 url(#id) は許可される");
   eq(Err('<svg viewBox="0 0 1 1"><use href="#a"/></svg>'), null, "フラグメント参照 href=#id は許可される");
 
-  /* バンク全体としての拒否(現行バンクを維持できること) */
+  /* v4.3: バンク全体は拒否せず、当該svgのみ破棄して採用する */
   const bad = JSON.parse(JSON.stringify(BANKS.Y));
   bad.questions[0].svg = '<svg viewBox="0 0 1 1"><script>x</script></svg>';
+  bad.questions[1].svg = OK_SVG;
   const rBad = run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(bad))}, "Y", [])`);
-  ok(!rBad.ok, "不正SVGを含むバンクは更新拒否される");
-  ok(/script/.test(rBad.reason), `拒否理由に原因が出る(${rBad.reason})`);
+  ok(rBad.ok, "不正SVGを含んでもバンクは採用される(v4.3: 拒否しない)");
+  eq(rBad.bank.questions[0].svg, undefined, "不正だった問題の svg は破棄される");
+  eq(rBad.bank.questions[1].svg, OK_SVG, "同じバンク内の正常な svg は残る");
+  eq(rBad.bank.questions.length, bad.questions.length, "問題そのものは削られない(図なしで出題)");
+  eq(rBad.svgWarnings.length, 1, "破棄した図版の警告が返る");
+  ok(/script/.test(rBad.svgWarnings[0]), `警告に原因とidが出る(${rBad.svgWarnings[0]})`);
+  eq(rBad.bank.questions[0].ans, bad.questions[0].ans, "svg以外のフィールドは変更されない");
 
   const good = JSON.parse(JSON.stringify(BANKS.Y));
   good.questions[0].svg = OK_SVG;
-  ok(run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(good))}, "Y", [])`).ok,
-     "正常SVGを含むバンクは受理される");
+  const rGood = run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(good))}, "Y", [])`);
+  ok(rGood.ok, "正常SVGを含むバンクは受理される");
+  eq(rGood.svgWarnings.length, 0, "正常なら警告は出ない");
 
   const goodM = JSON.parse(JSON.stringify(BANKS.M));
   goodM.questions[0].svg = OK_SVG;
   ok(run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(goodM))}, "M", ${JSON.stringify(allQs("M").map(q=>q.id))})`).ok,
      "復習バンクでもSVGを受理する(全科目共通)");
 
-  /* 起動時の構造チェックでも弾く(壊れたキャッシュを採用しない) */
-  ok(!run(E, `validateBankObj(${JSON.stringify(bad)}, "Y")`), "不正SVGのバンクは起動時にも採用されない");
-  ok(run(E, `validateBankObj(${JSON.stringify(good)}, "Y")`), "正常SVGのバンクは起動時に採用される");
+  const badM = JSON.parse(JSON.stringify(BANKS.M));
+  badM.questions[0].svg = '<svg viewBox="0 0 1 1"><rect onload="x()"/></svg>';
+  const rBadM = run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(badM))}, "M", ${JSON.stringify(allQs("M").map(q=>q.id))})`);
+  ok(rBadM.ok, "復習バンクでも不正SVGで拒否されない");
+  eq(rBadM.bank.questions[0].svg, undefined, "復習バンクでも当該svgのみ破棄される");
+
+  /* 起動時の採用も同じ: バンクは使え、危険な図版だけ落ちる */
+  ok(run(E, `validateBankObj(${JSON.stringify(bad)}, "Y")`), "不正SVGがあっても起動時にバンクは採用される");
+  const st = run(E, `stripUnsafeSvg(${JSON.stringify(bad)})`);
+  eq(st.bank.questions[0].svg, undefined, "起動時の採用経路でも危険な図版は破棄される");
+  eq(st.warnings.length, 1, "起動時も警告が得られる(コンソール出力用)");
+
+  /* 図版まわり以外の拒否条件は従来どおり効いている */
+  const missing = JSON.parse(JSON.stringify(BANKS.M));
+  missing.questions = missing.questions.slice(1);
+  ok(!run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(missing))}, "M", ${JSON.stringify(allQs("M").map(q=>q.id))})`).ok,
+     "id欠落は従来どおり拒否される(緩めたのは図版だけ)");
+}
+
+/* =====================================================================
+   §9-16 壊れたSVGでもアプリが落ちない — v4.3 §5.2 エンジン側の防御
+   ===================================================================== */
+section("§9-16 壊れたSVGのフォールバック");
+{
+  /* 文字列検査は通るが、XMLとしては壊れている・描画できない例 */
+  const brokenList = [
+    ['タグが閉じていない', '<svg viewBox="0 0 10 10"><rect width="5" height="5"></svg>'],
+    ['viewBoxが無い',      '<svg><rect width="5" height="5"/></svg>'],
+    ['viewBoxが不正',      '<svg viewBox="a b c d"><rect width="5" height="5"/></svg>'],
+    ['中身が空',           '<svg viewBox="0 0 10 10"></svg>']
+  ];
+  for(const [label, svg] of brokenList){
+    const bank = { bankVersion:"T", subject:"Y", testDate:"2026-08-01",
+      cats: BANKS.Y.cats,
+      questions: [{ id:"Y0001", cat:"算数", kai:1, q:"テスト", svg, ans:["1"] }] };
+    /* 破綻したSVGでも「バンクは使える」ことが要件(描画側で図なしにフォールバック) */
+    ok(run(E, `validateBankObj(${JSON.stringify(bank)}, "Y")`), `${label}: バンクは採用される`);
+    const s = run(E, `stripUnsafeSvg(${JSON.stringify(bank)})`);
+    eq(s.bank.questions[0].ans, ["1"], `${label}: 問題自体は無傷で解答できる`);
+    eq(s.bank.questions[0].q, "テスト", `${label}: 問題文は残る`);
+  }
+
+  /* 図が無い/落ちた状態でも採点系は完全に通常動作する */
+  const q = { id:"Y0001", cat:"算数", q:"1+1は?", ans:["2"] };
+  eq(run(E, `answerMatches(${JSON.stringify(q)}, "2")`), true, "図なしでも正答判定できる");
+  const st2 = run(E, `(() => { const s = emptyState("x");
+    recordAnswer(s, ${JSON.stringify(q)}, true, "yoshu", new Date(2026,7,1)); return s; })()`);
+  eq(st2.boxes["Y0001"], 1, "図なしでも箱が進む");
+  eq(st2.xp, 1, "図なしでもxpが増える");
 }
 
 /* =====================================================================

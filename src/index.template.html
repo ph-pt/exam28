@@ -137,10 +137,11 @@
 
   /* ---------- 図版(SVG) v4.2 §5.2 ---------- */
   /* 問題文の直下・中央寄せ。currentColor がスキンの ink を拾えるよう color を渡す */
+  /* §5.2 作図標準: 中央寄せ・max-width 300〜320px(iPad縦/iPhone想定) */
   .qfig{margin:14px auto 0; text-align:center; color:var(--ink);}
-  .qfig svg{max-width:100%; height:auto; max-height:40vh; display:inline-block; vertical-align:middle;}
+  .qfig svg{max-width:min(100%, 320px); height:auto; display:inline-block; vertical-align:middle;}
   .qfig-sm{margin:10px auto;}
-  .qfig-sm svg{max-height:22vh;}
+  .qfig-sm svg{max-width:min(100%, 240px);}
   .fb .qfig{margin:10px auto;}
 
   .answer-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px;}

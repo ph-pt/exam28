@@ -137,10 +137,11 @@
 
   /* ---------- 図版(SVG) v4.2 §5.2 ---------- */
   /* 問題文の直下・中央寄せ。currentColor がスキンの ink を拾えるよう color を渡す */
+  /* §5.2 作図標準: 中央寄せ・max-width 300〜320px(iPad縦/iPhone想定) */
   .qfig{margin:14px auto 0; text-align:center; color:var(--ink);}
-  .qfig svg{max-width:100%; height:auto; max-height:40vh; display:inline-block; vertical-align:middle;}
+  .qfig svg{max-width:min(100%, 320px); height:auto; display:inline-block; vertical-align:middle;}
   .qfig-sm{margin:10px auto;}
-  .qfig-sm svg{max-height:22vh;}
+  .qfig-sm svg{max-width:min(100%, 240px);}
   .fb .qfig{margin:10px auto;}
 
   .answer-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px;}
@@ -4245,6 +4246,28 @@ function svgFieldError(svg){
   return null;
 }
 
+/* v4.3 §6: セキュリティ規則に違反する svg は、バンク全体を拒否せず
+   **当該問題の svg だけを破棄**して図なしで採用する。
+   図は提示専用の補助データなので、破棄すれば描画されず安全。
+   図1枚の不備で月次バンク更新を差し戻さないための措置。
+   戻り値: { bank(破棄済み), warnings[] }                            */
+function stripUnsafeSvg(bank){
+  const warnings = [];
+  if(!bank || !Array.isArray(bank.questions)) return { bank, warnings };
+  let changed = false;
+  const questions = bank.questions.map(q => {
+    if(!q || q.svg === undefined || q.svg === null) return q;
+    const err = svgFieldError(q.svg);
+    if(!err) return q;
+    warnings.push(`${q.id}: ${err}`);
+    changed = true;
+    const copy = { ...q };
+    delete copy.svg;
+    return copy;
+  });
+  return { bank: changed ? { ...bank, questions } : bank, warnings };
+}
+
 /* 起動時の構造チェック(内蔵バンク・localStorageキャッシュの読み込み用)。
    §5 の空バンク bank_K を通すため questions は空配列を許容する
    (おうちの人メニューからの投入では validateBankPaste が 1問以上を要求する) */
@@ -4253,9 +4276,10 @@ function validateBankObj(b, subject){
   if(b.subject !== subject) return false;
   if(!Array.isArray(b.cats)) return false;
   if(!Array.isArray(b.questions)) return false;
+  /* v4.3: 図版の不備でバンクを不採用にはしない。危険な svg は
+     stripUnsafeSvg() が採用時に破棄する(図が出ないだけで問題は解ける) */
   return b.questions.every(q =>
-    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0 &&
-    svgFieldError(q.svg) === null);          // v4.2: 壊れた/危険な図版を持つバンクは採用しない
+    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0);
 }
 
 function validateSkinObj(s, kind){
@@ -4313,8 +4337,6 @@ function validateBankPasteFukushu(text, subject, existingIds){
     if(ansNeedsTwoForms(q, subject) && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。` };
     }
-    const svgErr = svgFieldError(q.svg);
-    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
     ids.push(q.id);
   }
 
@@ -4335,7 +4357,9 @@ function validateBankPasteFukushu(text, subject, existingIds){
     return { ok:false, reason:`新規idは既存の続き番号にしてください(番号が既存以下のid: ${badNew.slice(0,5).join("、")})。` };
   }
 
-  return { ok:true, bank:c };
+  /* v4.3 §6: 不正な図版はバンクを拒否せず、当該svgのみ破棄して採用する */
+  const stripped = stripUnsafeSvg(c);
+  return { ok:true, bank:stripped.bank, svgWarnings:stripped.warnings };
 }
 
 /* ---------- Y(サイクル使い捨てバンク) ---------- */
@@ -4375,11 +4399,10 @@ function validateBankPasteYoshu(text){
     if(ansNeedsTwoForms(q, "Y") && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。国語の漢字問題のみ1種可。` };
     }
-    const svgErr = svgFieldError(q.svg);
-    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
   }
   /* サイクル使い捨てのため既存バンクとの連続性チェックは行わない(yoshu §8) */
-  return { ok:true, bank:c };
+  const stripped = stripUnsafeSvg(c);
+  return { ok:true, bank:stripped.bank, svgWarnings:stripped.warnings };
 }
 
 function validateBankPaste(text, subject, existingIds){
@@ -4716,12 +4739,24 @@ const SUBJECT_ICON  = { M:"🧮", R:"🔬", S:"🗾", K:"📖" };
 /* subject -> { subject, mode, bank, skin, bankSource, skinSource, state, allQs, liveQs, cats } */
 const WORLDS = {};
 
+/* v4.3 §5.2/§6: 危険な図版はここで破棄する。バンク自体は採用し、
+   図が出ないだけで問題は解ける状態にする。気づけるようコンソールに警告を残す
+   (子供の画面に警告バナーは出さない。おうちの人メニュー側で理由を表示する) */
+function warnStrippedSvg(subject, warnings){
+  warnings.forEach(w => console.warn(`[quest] bank_${subject}: 図版を破棄しました — ${w}`));
+}
+
 let VIEW = { tab: "fukushu", subject: null };     // subject=null はふくしゅうの科目ドア画面
 let fallbackWarnings = [];
 let pendingCycleSwitch = null;                    // §7.1 起動時確認待ちの新bank_Y
 
 /* ---------- 世界(科目)ごとの派生 ---------- */
 function deriveWorld(w){
+  /* バンクが差し替わる経路(起動・メニュー投入・サイクル交代)は必ずここを通る */
+  const stripped = stripUnsafeSvg(w.bank);
+  if(stripped.warnings.length) warnStrippedSvg(w.subject, stripped.warnings);
+  w.bank = stripped.bank;
+  w.svgWarnings = stripped.warnings;
   w.allQs  = [...(w.bank.questions || [])].sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   w.liveQs = w.allQs.filter(q => !q.retired);
   w.cats   = (Array.isArray(w.bank.cats) ? w.bank.cats : []).filter(c => w.liveQs.some(q => q.cat === c.cat));
@@ -4933,8 +4968,15 @@ function sanitizeSvg(raw){
    variant: "q"(出題・解説) / "review"(見直しコーナー。小さめに出す) */
 function svgFigureHtml(q, variant){
   if(!q || !q.svg) return "";
-  const clean = sanitizeSvg(q.svg);
-  if(!clean) return "";
+  let clean = null;
+  try{ clean = sanitizeSvg(q.svg); }
+  catch(e){ clean = null; }
+  if(!clean){
+    /* v4.3 §5.2 エンジン側の防御: パース・描画に失敗しても落とさない。
+       図なしで問題文のみ表示して続行し、気づけるようコンソールに警告を出す */
+    console.warn(`[quest] 図版を描画できませんでした(id: ${q.id})。図なしで表示します。`);
+    return "";
+  }
   return `<div class="qfig ${variant === "review" ? "qfig-sm" : ""}">${clean}</div>`;
 }
 
@@ -5650,9 +5692,13 @@ function renderParentMenu(msg){
       return;
     }
     applyBankToWorld(sub, result.bank);
-    renderParentMenu({ target:"bank", ok:true, text: storageAvailable
+    /* v4.3 §6: 不正な図版はバンクを拒否せず破棄して採用する。破棄したことは伝える */
+    const svgNote = (result.svgWarnings && result.svgWarnings.length)
+      ? `　⚠️ 図版${result.svgWarnings.length}件を安全のため取り除きました(図なしで出題されます): ${result.svgWarnings.join(" / ")}`
+      : "";
+    renderParentMenu({ target:"bank", ok:true, text: (storageAvailable
       ? "✅ 更新しました!(この端末に保存されました)"
-      : "✅ 今回のセッションで更新しました(保存はされていません。次回はまた読み込んでね)" });
+      : "✅ 今回のセッションで更新しました(保存はされていません。次回はまた読み込んでね)") + svgNote });
   };
   document.getElementById("applyBankBtn").addEventListener("click", () => doApplyBank(document.getElementById("bankPaste").value));
   document.getElementById("bankFile").addEventListener("change", ev => readFileInto(ev, doApplyBank, "bank"));

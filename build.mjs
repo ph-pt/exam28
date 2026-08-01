@@ -149,14 +149,19 @@ const svgChecker = (() => {
   return ctx.svgFieldError;
 })();
 
+/* v4.3 §6: 図版の不備でビルドを止めない(月次バンク更新を差し戻さない方針)。
+   不正な svg は実行時に stripUnsafeSvg() が破棄して図なしで出題されるので、
+   ここでは配信前に気づけるよう警告を出すだけにする。 */
 function checkBankSvg(file, bank){
   if(!bank || !Array.isArray(bank.questions)) return;
+  const bad = [];
   for(const q of bank.questions){
     const err = svgChecker(q && q.svg);
-    if(err) throw new Error(`${file} の図版が不正です(id: ${q && q.id}): ${err}`);
+    if(err) bad.push(`${q && q.id}: ${err}`);
   }
   const withSvg = bank.questions.filter(q => q && q.svg).length;
-  if(withSvg) console.log(`  ${file}: 図版つき ${withSvg}問`);
+  if(withSvg) console.log(`  ${file}: 図版つき ${withSvg}問${bad.length ? ` (うち${bad.length}問は実行時に破棄されます)` : ""}`);
+  bad.forEach(b => console.warn(`  ⚠️ ${file} の図版が不正です — ${b}`));
 }
 
 /* ---------- ビルド本体 ---------- */

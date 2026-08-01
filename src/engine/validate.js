@@ -34,6 +34,28 @@ function svgFieldError(svg){
   return null;
 }
 
+/* v4.3 §6: セキュリティ規則に違反する svg は、バンク全体を拒否せず
+   **当該問題の svg だけを破棄**して図なしで採用する。
+   図は提示専用の補助データなので、破棄すれば描画されず安全。
+   図1枚の不備で月次バンク更新を差し戻さないための措置。
+   戻り値: { bank(破棄済み), warnings[] }                            */
+function stripUnsafeSvg(bank){
+  const warnings = [];
+  if(!bank || !Array.isArray(bank.questions)) return { bank, warnings };
+  let changed = false;
+  const questions = bank.questions.map(q => {
+    if(!q || q.svg === undefined || q.svg === null) return q;
+    const err = svgFieldError(q.svg);
+    if(!err) return q;
+    warnings.push(`${q.id}: ${err}`);
+    changed = true;
+    const copy = { ...q };
+    delete copy.svg;
+    return copy;
+  });
+  return { bank: changed ? { ...bank, questions } : bank, warnings };
+}
+
 /* 起動時の構造チェック(内蔵バンク・localStorageキャッシュの読み込み用)。
    §5 の空バンク bank_K を通すため questions は空配列を許容する
    (おうちの人メニューからの投入では validateBankPaste が 1問以上を要求する) */
@@ -42,9 +64,10 @@ function validateBankObj(b, subject){
   if(b.subject !== subject) return false;
   if(!Array.isArray(b.cats)) return false;
   if(!Array.isArray(b.questions)) return false;
+  /* v4.3: 図版の不備でバンクを不採用にはしない。危険な svg は
+     stripUnsafeSvg() が採用時に破棄する(図が出ないだけで問題は解ける) */
   return b.questions.every(q =>
-    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0 &&
-    svgFieldError(q.svg) === null);          // v4.2: 壊れた/危険な図版を持つバンクは採用しない
+    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0);
 }
 
 function validateSkinObj(s, kind){
@@ -102,8 +125,6 @@ function validateBankPasteFukushu(text, subject, existingIds){
     if(ansNeedsTwoForms(q, subject) && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。` };
     }
-    const svgErr = svgFieldError(q.svg);
-    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
     ids.push(q.id);
   }
 
@@ -124,7 +145,9 @@ function validateBankPasteFukushu(text, subject, existingIds){
     return { ok:false, reason:`新規idは既存の続き番号にしてください(番号が既存以下のid: ${badNew.slice(0,5).join("、")})。` };
   }
 
-  return { ok:true, bank:c };
+  /* v4.3 §6: 不正な図版はバンクを拒否せず、当該svgのみ破棄して採用する */
+  const stripped = stripUnsafeSvg(c);
+  return { ok:true, bank:stripped.bank, svgWarnings:stripped.warnings };
 }
 
 /* ---------- Y(サイクル使い捨てバンク) ---------- */
@@ -164,11 +187,10 @@ function validateBankPasteYoshu(text){
     if(ansNeedsTwoForms(q, "Y") && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。国語の漢字問題のみ1種可。` };
     }
-    const svgErr = svgFieldError(q.svg);
-    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
   }
   /* サイクル使い捨てのため既存バンクとの連続性チェックは行わない(yoshu §8) */
-  return { ok:true, bank:c };
+  const stripped = stripUnsafeSvg(c);
+  return { ok:true, bank:stripped.bank, svgWarnings:stripped.warnings };
 }
 
 function validateBankPaste(text, subject, existingIds){

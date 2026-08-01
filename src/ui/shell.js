@@ -12,12 +12,24 @@ const SUBJECT_ICON  = { M:"🧮", R:"🔬", S:"🗾", K:"📖" };
 /* subject -> { subject, mode, bank, skin, bankSource, skinSource, state, allQs, liveQs, cats } */
 const WORLDS = {};
 
+/* v4.3 §5.2/§6: 危険な図版はここで破棄する。バンク自体は採用し、
+   図が出ないだけで問題は解ける状態にする。気づけるようコンソールに警告を残す
+   (子供の画面に警告バナーは出さない。おうちの人メニュー側で理由を表示する) */
+function warnStrippedSvg(subject, warnings){
+  warnings.forEach(w => console.warn(`[quest] bank_${subject}: 図版を破棄しました — ${w}`));
+}
+
 let VIEW = { tab: "fukushu", subject: null };     // subject=null はふくしゅうの科目ドア画面
 let fallbackWarnings = [];
 let pendingCycleSwitch = null;                    // §7.1 起動時確認待ちの新bank_Y
 
 /* ---------- 世界(科目)ごとの派生 ---------- */
 function deriveWorld(w){
+  /* バンクが差し替わる経路(起動・メニュー投入・サイクル交代)は必ずここを通る */
+  const stripped = stripUnsafeSvg(w.bank);
+  if(stripped.warnings.length) warnStrippedSvg(w.subject, stripped.warnings);
+  w.bank = stripped.bank;
+  w.svgWarnings = stripped.warnings;
   w.allQs  = [...(w.bank.questions || [])].sort((a,b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   w.liveQs = w.allQs.filter(q => !q.retired);
   w.cats   = (Array.isArray(w.bank.cats) ? w.bank.cats : []).filter(c => w.liveQs.some(q => q.cat === c.cat));

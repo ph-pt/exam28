@@ -101,9 +101,13 @@ function renderParentMenu(msg){
       return;
     }
     applyBankToWorld(sub, result.bank);
-    renderParentMenu({ target:"bank", ok:true, text: storageAvailable
+    /* v4.3 §6: 不正な図版はバンクを拒否せず破棄して採用する。破棄したことは伝える */
+    const svgNote = (result.svgWarnings && result.svgWarnings.length)
+      ? `　⚠️ 図版${result.svgWarnings.length}件を安全のため取り除きました(図なしで出題されます): ${result.svgWarnings.join(" / ")}`
+      : "";
+    renderParentMenu({ target:"bank", ok:true, text: (storageAvailable
       ? "✅ 更新しました!(この端末に保存されました)"
-      : "✅ 今回のセッションで更新しました(保存はされていません。次回はまた読み込んでね)" });
+      : "✅ 今回のセッションで更新しました(保存はされていません。次回はまた読み込んでね)") + svgNote });
   };
   document.getElementById("applyBankBtn").addEventListener("click", () => doApplyBank(document.getElementById("bankPaste").value));
   document.getElementById("bankFile").addEventListener("change", ev => readFileInto(ev, doApplyBank, "bank"));
