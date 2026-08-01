@@ -135,6 +135,14 @@
   .qtext{font-size:21px; line-height:1.7; font-weight:600; min-height:3.4em;}
   .write-tip{font-size:12.5px; color:#8896AC; margin-top:10px;}
 
+  /* ---------- 図版(SVG) v4.2 §5.2 ---------- */
+  /* 問題文の直下・中央寄せ。currentColor がスキンの ink を拾えるよう color を渡す */
+  .qfig{margin:14px auto 0; text-align:center; color:var(--ink);}
+  .qfig svg{max-width:100%; height:auto; max-height:40vh; display:inline-block; vertical-align:middle;}
+  .qfig-sm{margin:10px auto;}
+  .qfig-sm svg{max-height:22vh;}
+  .fb .qfig{margin:10px auto;}
+
   .answer-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px;}
   .answer-box{flex:1; font-size:28px; font-weight:800; text-align:center; background:#F4F8FD; border:2px dashed var(--sky); border-radius:14px; min-height:58px; display:flex; align-items:center; justify-content:center; letter-spacing:1px; overflow:hidden;}
   .answer-box.filled{border-style:solid;}

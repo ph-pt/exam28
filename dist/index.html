@@ -135,6 +135,14 @@
   .qtext{font-size:21px; line-height:1.7; font-weight:600; min-height:3.4em;}
   .write-tip{font-size:12.5px; color:#8896AC; margin-top:10px;}
 
+  /* ---------- 図版(SVG) v4.2 §5.2 ---------- */
+  /* 問題文の直下・中央寄せ。currentColor がスキンの ink を拾えるよう color を渡す */
+  .qfig{margin:14px auto 0; text-align:center; color:var(--ink);}
+  .qfig svg{max-width:100%; height:auto; max-height:40vh; display:inline-block; vertical-align:middle;}
+  .qfig-sm{margin:10px auto;}
+  .qfig-sm svg{max-height:22vh;}
+  .fb .qfig{margin:10px auto;}
+
   .answer-row{display:flex; align-items:center; gap:10px; margin:18px 0 4px;}
   .answer-box{flex:1; font-size:28px; font-weight:800; text-align:center; background:#F4F8FD; border:2px dashed var(--sky); border-radius:14px; min-height:58px; display:flex; align-items:center; justify-content:center; letter-spacing:1px; overflow:hidden;}
   .answer-box.filled{border-style:solid;}
@@ -4209,6 +4217,34 @@ function nextBox(curBox, ok, mode){
 
 const YOSHU_REQUIRED_CATS = ["算数", "国語", "社会", "理科"];
 
+/* ---------- 図版(SVG)の検査 — v4.2 §5.2 / §6 ----------
+   svg は任意フィールド。無い問題は従来どおり(後方互換)。
+   ここは文字列レベルの門前払い。描画直前にはホワイトリスト方式の
+   サニタイズ(ui/quiz.js の sanitizeSvg)がもう一段かかる。
+   不合格なら理由文字列、問題なければ null を返す。                    */
+function svgFieldError(svg){
+  if(svg === undefined || svg === null) return null;          // 未指定はOK
+  if(typeof svg !== "string") return "svgは文字列で指定してください";
+  const s = svg.trim();
+  if(!s) return "svgが空です";
+  if(!/^<svg[\s>]/i.test(s))  return "svgは <svg で始まる必要があります";
+  if(!/<\/svg>$/i.test(s))    return "svgは </svg> で終わる必要があります";
+  if(/<script[\s>]/i.test(s)) return "svgに script は含められません";
+  if(/<foreignObject[\s>]/i.test(s)) return "svgに foreignObject は含められません";
+  if(/<\s*(iframe|embed|object|animate|set)[\s>]/i.test(s)) return "svgに埋め込み・アニメーション要素は含められません";
+  if(/\son[a-z]+\s*=/i.test(s)) return "svgにイベント属性(on*)は含められません";
+  if(/javascript\s*:/i.test(s)) return "svgに javascript: は含められません";
+
+  /* 外部参照の禁止(オフライン原則 §7)。フラグメント参照(#id)のみ許可 */
+  const refs = s.match(/(?:xlink:)?href\s*=\s*(["'])([\s\S]*?)\1/gi) || [];
+  for(const r of refs){
+    const v = (/(["'])([\s\S]*?)\1/.exec(r) || [])[2] || "";
+    if(!v.trim().startsWith("#")) return "svgに外部参照(href)は含められません";
+  }
+  if(/url\s*\(\s*["']?\s*(?!#)/i.test(s)) return "svgに外部リソース参照(url())は含められません";
+  return null;
+}
+
 /* 起動時の構造チェック(内蔵バンク・localStorageキャッシュの読み込み用)。
    §5 の空バンク bank_K を通すため questions は空配列を許容する
    (おうちの人メニューからの投入では validateBankPaste が 1問以上を要求する) */
@@ -4218,7 +4254,8 @@ function validateBankObj(b, subject){
   if(!Array.isArray(b.cats)) return false;
   if(!Array.isArray(b.questions)) return false;
   return b.questions.every(q =>
-    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0);
+    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0 &&
+    svgFieldError(q.svg) === null);          // v4.2: 壊れた/危険な図版を持つバンクは採用しない
 }
 
 function validateSkinObj(s, kind){
@@ -4276,6 +4313,8 @@ function validateBankPasteFukushu(text, subject, existingIds){
     if(ansNeedsTwoForms(q, subject) && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。` };
     }
+    const svgErr = svgFieldError(q.svg);
+    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
     ids.push(q.id);
   }
 
@@ -4336,6 +4375,8 @@ function validateBankPasteYoshu(text){
     if(ansNeedsTwoForms(q, "Y") && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。国語の漢字問題のみ1種可。` };
     }
+    const svgErr = svgFieldError(q.svg);
+    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
   }
   /* サイクル使い捨てのため既存バンクとの連続性チェックは行わない(yoshu §8) */
   return { ok:true, bank:c };
@@ -4786,6 +4827,118 @@ function flushAllStates(){
 }
 
 
+/* ===== src/ui/svg.js ===== */
+/* =====================================================================
+   ui/svg.js — 図版(SVG)のサニタイズと描画 — v4.2 §5.2
+   ・図は「問題の提示専用」。操作・解答には一切使わない
+   ・バンク投入時の文字列検査(engine/validate.js の svgFieldError)に加えて、
+     描画直前にホワイトリスト方式で組み立て直す二段構え。
+     バンクJSONは家庭内で編集されるため、通ってしまった記述があっても
+     許可した要素・属性以外は DOM に載らない。
+   ・外部参照は禁止(オフライン原則 §7)。href はフラグメント(#id)のみ許可
+   ===================================================================== */
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+/* 図形・テキスト・マーカーまわりに限定。image/script/foreignObject 等は含めない */
+const SVG_ALLOWED_TAGS = new Set([
+  "svg","g","defs","title","desc","style",
+  "path","line","polyline","polygon","rect","circle","ellipse",
+  "text","tspan","marker","use","symbol",
+  "linearGradient","radialGradient","stop","clipPath","pattern"
+]);
+
+const SVG_ALLOWED_ATTRS = new Set([
+  "viewbox","xmlns","preserveaspectratio","width","height","id","class","transform",
+  "d","points","x","y","dx","dy","x1","y1","x2","y2","cx","cy","r","rx","ry",
+  "fill","fill-opacity","fill-rule","stroke","stroke-width","stroke-opacity",
+  "stroke-dasharray","stroke-linecap","stroke-linejoin","stroke-miterlimit",
+  "opacity","color","font-size","font-family","font-weight","font-style",
+  "text-anchor","dominant-baseline","alignment-baseline","letter-spacing",
+  "marker-start","marker-mid","marker-end","orient","refx","refy",
+  "markerwidth","markerheight","markerunits","offset","stop-color","stop-opacity",
+  "gradientunits","patternunits","clip-path","clip-rule","vector-effect",
+  "spreadmethod","fx","fy","overflow","style","xml:space"
+]);
+
+/* style 属性・<style> 要素に外部参照や式が紛れていないか */
+function svgStyleIsSafe(v){
+  return !/url\s*\(|@import|expression\s*\(|javascript\s*:|behavior\s*:/i.test(String(v));
+}
+
+function svgCleanNode(src, doc, depth){
+  if(depth > 24) return null;                       // 異常に深い入れ子は捨てる
+  const tag = src.nodeName.toLowerCase();
+  if(!SVG_ALLOWED_TAGS.has(tag)) return null;
+
+  const el = doc.createElementNS(SVG_NS, tag);
+  for(const at of Array.from(src.attributes || [])){
+    const name = at.name.toLowerCase();
+    const val = at.value;
+    if(name.startsWith("on")) continue;                       // イベント属性
+    if(name === "href" || name === "xlink:href"){
+      if(!String(val).trim().startsWith("#")) continue;       // 外部参照は落とす
+      el.setAttribute("href", val);
+      continue;
+    }
+    if(!SVG_ALLOWED_ATTRS.has(name)) continue;
+    if(name === "style" && !svgStyleIsSafe(val)) continue;
+    if(/url\s*\(\s*(?!["']?#)/i.test(val)) continue;          // 外部リソース参照
+    el.setAttribute(at.name, val);
+  }
+
+  for(const child of Array.from(src.childNodes)){
+    if(child.nodeType === 3){                                  // テキスト
+      if(tag === "style" && !svgStyleIsSafe(child.nodeValue)) continue;
+      el.appendChild(doc.createTextNode(child.nodeValue));
+    } else if(child.nodeType === 1){
+      const c = svgCleanNode(child, doc, depth+1);
+      if(c) el.appendChild(c);
+    }
+    /* コメント・CDATA・処理命令は捨てる */
+  }
+  return el;
+}
+
+/* 生のSVG文字列 → 安全なSVGマークアップ。使えないときは null */
+function sanitizeSvg(raw){
+  if(typeof raw !== "string" || !raw.trim()) return null;
+  if(typeof DOMParser === "undefined") return null;
+  let doc;
+  try{ doc = new DOMParser().parseFromString(raw.trim(), "image/svg+xml"); }
+  catch(e){ return null; }
+  if(!doc || doc.getElementsByTagName("parsererror").length) return null;
+  const root = doc.documentElement;
+  if(!root || root.nodeName.toLowerCase() !== "svg") return null;
+
+  const out = svgCleanNode(root, document, 0);
+  if(!out) return null;
+
+  /* 拡縮の基準として viewBox を必須にする */
+  const vb = (out.getAttribute("viewBox") || "").trim().split(/[\s,]+/).map(Number);
+  if(vb.length !== 4 || vb.some(n => !Number.isFinite(n)) || vb[2] <= 0 || vb[3] <= 0) return null;
+
+  /* 固有サイズを viewBox から与える。こうしておくと CSS 側の
+     max-width:100% / height:auto で「小さい図はそのまま・大きい図は縮む」になる。
+     width/height を消してしまうと固有サイズが無くなり 0x0 に潰れる。 */
+  out.setAttribute("width", String(vb[2]));
+  out.setAttribute("height", String(vb[3]));
+  out.setAttribute("preserveAspectRatio", out.getAttribute("preserveAspectRatio") || "xMidYMid meet");
+  out.setAttribute("xmlns", SVG_NS);
+  out.setAttribute("role", "img");
+  return out.outerHTML;
+}
+
+/* 問題に図版があれば、その描画ブロックを返す。無ければ空文字
+   variant: "q"(出題・解説) / "review"(見直しコーナー。小さめに出す) */
+function svgFigureHtml(q, variant){
+  if(!q || !q.svg) return "";
+  const clean = sanitizeSvg(q.svg);
+  if(!clean) return "";
+  return `<div class="qfig ${variant === "review" ? "qfig-sm" : ""}">${clean}</div>`;
+}
+
+
 /* ===== src/ui/quiz.js ===== */
 /* =====================================================================
    ui/quiz.js — 出題〜判定〜結果(ふくしゅう/じゅんび 共通)
@@ -4835,6 +4988,7 @@ function renderQ(){
       ${q._revenge ? `<div class="revenge-badge">🔥 リベンジ問題!</div>` : ""}
       <div class="qnum">${catInfo?esc(catInfo.icon||""):""} ${esc(q.cat||"")} ・ だい ${s.idx+1} もん / ${s.qs.length}もん</div>
       <div class="qtext">${esc(q.q)}</div>
+      ${svgFigureHtml(q, "q")}
       <div class="answer-row">
         ${s.numeric
           ? `<input type="text" class="answer-box" id="ansbox" inputmode="none" autocomplete="off" enterkeyhint="done">`
@@ -4945,8 +5099,9 @@ function check(){
       ${s.hint === 0 ? "ノーヒントはえらい!" : esc(w.skin.hintPraise)}
       <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
   } else {
+    /* 誤答時の即解説。図が本質の問題は解説でも図を再掲する(§5.2) */
     fb.innerHTML = `<div class="fb ng"><div class="fb-head">❌ ざんねん…</div>
-      正解は <b>${esc(q.ans[0])}${esc(q.unit_label||"")}</b>。<br>📖 ${esc(q.exp)}<br>${esc(pick(w.skin.cheer))}
+      正解は <b>${esc(q.ans[0])}${esc(q.unit_label||"")}</b>。${svgFigureHtml(q, "review")}<br>📖 ${esc(q.exp)}<br>${esc(pick(w.skin.cheer))}
       <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
   }
   updateAns();
@@ -4990,6 +5145,7 @@ function renderResult(){
     ${misses.length?`<div class="review-head">📖 見直しコーナー(ノートで解き直そう)</div>`:""}
     ${misses.map(r=>`<div class="review">
         <div class="rq">Q. ${esc(r.q.q)}</div>
+        ${svgFigureHtml(r.q, "review")}
         <div class="ra"><span class="miss">きみの答え: ${esc(r.my)}</span> → 正解: <b>${esc(r.q.ans[0])}${esc(r.q.unit_label||"")}</b><br>${esc(r.q.exp)}</div>
       </div>`).join("")}
     <div class="res-btns">

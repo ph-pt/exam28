@@ -489,11 +489,11 @@ section("yoshu §11-5 サイクル交代の討伐記録(金/銀・全問題ベ�
   eq(e1.testDate, BANKS.Y.testDate, "テスト日が記録される");
 
   const full = {}; qs.forEach(q => { full[q.id] = 2; });
-  const e2 = run(ctx, `buildBossLogEntry(${JSON.stringify(SKINS.BOSS)}, ${JSON.stringify(BANKS.Y)}, ${JSON.stringify(qs)}, ${JSON.stringify(full)})`);
-  eq(e2.result, "討伐", "全問マスターなら金バッジ");
-  eq(e2.mastery, 100, "mastery 100%");
+  const E = run(ctx, `buildBossLogEntry(${JSON.stringify(SKINS.BOSS)}, ${JSON.stringify(BANKS.Y)}, ${JSON.stringify(qs)}, ${JSON.stringify(full)})`);
+  eq(E.result, "討伐", "全問マスターなら金バッジ");
+  eq(E.mastery, 100, "mastery 100%");
 
-  run(ctx, `saveBossLogEntry(${JSON.stringify(e1)}); saveBossLogEntry(${JSON.stringify(e2)});`);
+  run(ctx, `saveBossLogEntry(${JSON.stringify(e1)}); saveBossLogEntry(${JSON.stringify(E)});`);
   eq(run(ctx, `loadBossLog().length`), 2, "討伐記録が追記される");
 }
 
@@ -607,6 +607,93 @@ section("fukushu §4 復習のセッション構成");
   const s3 = run(E, `buildSessionFukushu(${JSON.stringify(qs)}, {boxes:${JSON.stringify(allBox2)},last:{}}, null, ${today})`);
   eq(s3.length, 8, "last が無くても8問は組める(未出題プールから補完)");
   eq(s3.filter(q => q._revenge).length, 0, "未出題はリベンジ扱いにならない");
+}
+
+/* =====================================================================
+   §9-14 図版(SVG)のバリデーション — v4.2 §5.2 / §6
+   ===================================================================== */
+section("§9-14 図版(SVG)のバリデーション");
+{
+  const OK_SVG = '<svg viewBox="0 0 200 120"><polygon points="10,110 100,10 190,110" fill="none" stroke="currentColor" stroke-width="2"/><text x="100" y="100" text-anchor="middle" font-size="12">ア</text></svg>';
+  const Err = v => run(E, `svgFieldError(${JSON.stringify(v)})`);
+
+  eq(run(E, `svgFieldError(undefined)`), null, "svg未指定はOK(後方互換)");
+  eq(run(E, `svgFieldError(null)`), null, "svg=nullもOK");
+  eq(Err(OK_SVG), null, "正常なSVGは通る");
+
+  ok(Err(123) !== null, "拒否: 文字列でない");
+  ok(Err("") !== null, "拒否: 空文字");
+  ok(Err('<div>x</div>') !== null, "拒否: <svg で始まらない");
+  ok(Err('<svg viewBox="0 0 1 1"><rect/>') !== null, "拒否: </svg> で終わらない");
+  ok(Err('<svg viewBox="0 0 1 1"><script>alert(1)</script></svg>') !== null, "拒否: script(§5.2)");
+  ok(Err('<svg viewBox="0 0 1 1"><foreignObject><b>x</b></foreignObject></svg>') !== null, "拒否: foreignObject(§5.2)");
+  ok(Err('<svg viewBox="0 0 1 1"><rect onload="alert(1)"/></svg>') !== null, "拒否: イベント属性 on*(§5.2)");
+  ok(Err('<svg viewBox="0 0 1 1"><rect onclick="x()"/></svg>') !== null, "拒否: onclick");
+  ok(Err('<svg viewBox="0 0 1 1"><image href="https://example.com/a.png"/></svg>') !== null, "拒否: 外部参照 href(§5.2)");
+  ok(Err('<svg viewBox="0 0 1 1"><use xlink:href="http://e.com/#a"/></svg>') !== null, "拒否: 外部参照 xlink:href");
+  ok(Err('<svg viewBox="0 0 1 1"><rect fill="url(https://e.com/x)"/></svg>') !== null, "拒否: 外部リソース url()");
+  ok(Err('<svg viewBox="0 0 1 1"><a href="javascript:alert(1)">x</a></svg>') !== null, "拒否: javascript:");
+  eq(Err('<svg viewBox="0 0 1 1"><defs><marker id="m"/></defs><line marker-end="url(#m)" x1="0" y1="0" x2="1" y2="1"/></svg>'), null,
+     "内部参照 url(#id) は許可される");
+  eq(Err('<svg viewBox="0 0 1 1"><use href="#a"/></svg>'), null, "フラグメント参照 href=#id は許可される");
+
+  /* バンク全体としての拒否(現行バンクを維持できること) */
+  const bad = JSON.parse(JSON.stringify(BANKS.Y));
+  bad.questions[0].svg = '<svg viewBox="0 0 1 1"><script>x</script></svg>';
+  const rBad = run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(bad))}, "Y", [])`);
+  ok(!rBad.ok, "不正SVGを含むバンクは更新拒否される");
+  ok(/script/.test(rBad.reason), `拒否理由に原因が出る(${rBad.reason})`);
+
+  const good = JSON.parse(JSON.stringify(BANKS.Y));
+  good.questions[0].svg = OK_SVG;
+  ok(run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(good))}, "Y", [])`).ok,
+     "正常SVGを含むバンクは受理される");
+
+  const goodM = JSON.parse(JSON.stringify(BANKS.M));
+  goodM.questions[0].svg = OK_SVG;
+  ok(run(E, `validateBankPaste(${JSON.stringify(JSON.stringify(goodM))}, "M", ${JSON.stringify(allQs("M").map(q=>q.id))})`).ok,
+     "復習バンクでもSVGを受理する(全科目共通)");
+
+  /* 起動時の構造チェックでも弾く(壊れたキャッシュを採用しない) */
+  ok(!run(E, `validateBankObj(${JSON.stringify(bad)}, "Y")`), "不正SVGのバンクは起動時にも採用されない");
+  ok(run(E, `validateBankObj(${JSON.stringify(good)}, "Y")`), "正常SVGのバンクは起動時に採用される");
+}
+
+/* =====================================================================
+   §9-15 図版つき問題が採点系に干渉しないこと — v4.2 §5.2
+   ===================================================================== */
+section("§9-15 図版は採点・進捗・セーブコードに干渉しない");
+{
+  const SVG = '<svg viewBox="0 0 100 60"><circle cx="50" cy="30" r="20" fill="none" stroke="currentColor"/></svg>';
+  const base = { id:"M9001", cat:"きほん", q:"図の角アは何度?", ans:["65"], unit_label:"度" };
+  const withSvg = { ...base, svg: SVG };
+
+  eq(run(E, `isNumericQuestion(${JSON.stringify(withSvg)})`),
+     run(E, `isNumericQuestion(${JSON.stringify(base)})`), "入力モード判定は svg の有無で変わらない");
+  eq(run(E, `answerMatches(${JSON.stringify(withSvg)}, "65")`), true, "svg付きでも正答を判定できる");
+  eq(run(E, `answerMatches(${JSON.stringify(withSvg)}, "64")`), false, "svg付きでも誤答を判定できる");
+
+  /* 箱の遷移・last の記録 */
+  const st = run(E, `(() => { const s = emptyState("x");
+    recordAnswer(s, ${JSON.stringify(withSvg)}, true, "fukushu", new Date(2026,7,1)); return s; })()`);
+  eq(st.boxes["M9001"], 3, "svg付きでも箱が進む");
+  eq(st.last["M9001"], "2026-08-01", "svg付きでも last が記録される");
+  eq(st.xp, 1, "svg付きでもxpが増える");
+
+  /* セーブコードは id と箱だけを載せる = svg の有無で長さが変わらない */
+  const qsPlain = allQs("M");
+  const qsSvg = qsPlain.map(q => ({ ...q, svg: SVG }));
+  const boxes = {}; qsPlain.forEach((q,i) => { boxes[q.id] = i % 4; });
+  const c1 = run(E, `makeSaveCode(${JSON.stringify(qsPlain)}, ${JSON.stringify(boxes)}, 42, "fukushu")`);
+  const c2 = run(E, `makeSaveCode(${JSON.stringify(qsSvg)},   ${JSON.stringify(boxes)}, 42, "fukushu")`);
+  eq(c2, c1, "svgの有無でセーブコードが変わらない(進捗はid+箱のみ)");
+  const back = run(E, `parseSaveCode(${JSON.stringify(c2)}, ${JSON.stringify(qsSvg)}, "fukushu")`);
+  eq(back.boxes, boxes, "svg付きバンクでもセーブコードが往復する");
+
+  /* セッション構成にも影響しない */
+  const s1 = run(E, `buildSessionFukushu(${JSON.stringify(qsSvg)}, {boxes:{},last:{}}, null, new Date(2026,7,1))`);
+  eq(s1.length, 8, "svg付きでもセッションは8問");
+  ok(s1.every(q => q.svg === SVG), "セッションの問題に svg が保持される(描画に渡る)");
 }
 
 /* =====================================================================

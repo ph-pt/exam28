@@ -13,6 +13,7 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { deflateSync } from "node:zlib";
 import { createHash } from "node:crypto";
+import { createContext, runInContext } from "node:vm";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const SRC   = join(ROOT, "src");
@@ -37,7 +38,7 @@ const ENGINE_FILES = [
   "validate.js", "storage.js", "state.js", "adopt.js", "boss.js", "titles.js"
 ];
 const UI_FILES = [
-  "shell.js", "quiz.js", "fukushu.js", "junbi.js", "parent.js", "app.js"
+  "shell.js", "svg.js", "quiz.js", "fukushu.js", "junbi.js", "parent.js", "app.js"
 ];
 
 const read = p => readFileSync(join(ROOT, p), "utf8");
@@ -137,14 +138,37 @@ function makeIconPng(size){
   ]);
 }
 
+/* ---------- 図版(SVG)の検査 — v4.2 §5.2 ----------
+   規則はエンジンの svgFieldError() が正本。二重定義を避けるため読み込んで使う。
+   不正な図版を含むバンクはビルドを失敗させ、配信に載せない。 */
+const svgChecker = (() => {
+  const src = ["normalize.js", "validate.js"]
+    .map(f => readFileSync(join(SRC, "engine", f), "utf8")).join("\n");
+  const ctx = createContext({});
+  runInContext(src, ctx);
+  return ctx.svgFieldError;
+})();
+
+function checkBankSvg(file, bank){
+  if(!bank || !Array.isArray(bank.questions)) return;
+  for(const q of bank.questions){
+    const err = svgChecker(q && q.svg);
+    if(err) throw new Error(`${file} の図版が不正です(id: ${q && q.id}): ${err}`);
+  }
+  const withSvg = bank.questions.filter(q => q && q.svg).length;
+  if(withSvg) console.log(`  ${file}: 図版つき ${withSvg}問`);
+}
+
 /* ---------- ビルド本体 ---------- */
 function build(){
   let html = read("src/index.template.html");
 
   for(const [name, file] of DATA_BLOCKS){
     const text = read(file);
-    try{ JSON.parse(text); }
+    let obj;
+    try{ obj = JSON.parse(text); }
     catch(e){ throw new Error(`${file} が JSON として不正です: ${e.message}`); }
+    checkBankSvg(file, obj);
     html = injectBlock(html, name, text.trim());
   }
 

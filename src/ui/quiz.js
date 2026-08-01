@@ -46,6 +46,7 @@ function renderQ(){
       ${q._revenge ? `<div class="revenge-badge">🔥 リベンジ問題!</div>` : ""}
       <div class="qnum">${catInfo?esc(catInfo.icon||""):""} ${esc(q.cat||"")} ・ だい ${s.idx+1} もん / ${s.qs.length}もん</div>
       <div class="qtext">${esc(q.q)}</div>
+      ${svgFigureHtml(q, "q")}
       <div class="answer-row">
         ${s.numeric
           ? `<input type="text" class="answer-box" id="ansbox" inputmode="none" autocomplete="off" enterkeyhint="done">`
@@ -156,8 +157,9 @@ function check(){
       ${s.hint === 0 ? "ノーヒントはえらい!" : esc(w.skin.hintPraise)}
       <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
   } else {
+    /* 誤答時の即解説。図が本質の問題は解説でも図を再掲する(§5.2) */
     fb.innerHTML = `<div class="fb ng"><div class="fb-head">❌ ざんねん…</div>
-      正解は <b>${esc(q.ans[0])}${esc(q.unit_label||"")}</b>。<br>📖 ${esc(q.exp)}<br>${esc(pick(w.skin.cheer))}
+      正解は <b>${esc(q.ans[0])}${esc(q.unit_label||"")}</b>。${svgFigureHtml(q, "review")}<br>📖 ${esc(q.exp)}<br>${esc(pick(w.skin.cheer))}
       <button class="next-btn" id="next">${last?"けっかを見る 🏁":"つぎの問題へ ▶"}</button></div>`;
   }
   updateAns();
@@ -201,6 +203,7 @@ function renderResult(){
     ${misses.length?`<div class="review-head">📖 見直しコーナー(ノートで解き直そう)</div>`:""}
     ${misses.map(r=>`<div class="review">
         <div class="rq">Q. ${esc(r.q.q)}</div>
+        ${svgFigureHtml(r.q, "review")}
         <div class="ra"><span class="miss">きみの答え: ${esc(r.my)}</span> → 正解: <b>${esc(r.q.ans[0])}${esc(r.q.unit_label||"")}</b><br>${esc(r.q.exp)}</div>
       </div>`).join("")}
     <div class="res-btns">

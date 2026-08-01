@@ -6,6 +6,34 @@
 
 const YOSHU_REQUIRED_CATS = ["算数", "国語", "社会", "理科"];
 
+/* ---------- 図版(SVG)の検査 — v4.2 §5.2 / §6 ----------
+   svg は任意フィールド。無い問題は従来どおり(後方互換)。
+   ここは文字列レベルの門前払い。描画直前にはホワイトリスト方式の
+   サニタイズ(ui/quiz.js の sanitizeSvg)がもう一段かかる。
+   不合格なら理由文字列、問題なければ null を返す。                    */
+function svgFieldError(svg){
+  if(svg === undefined || svg === null) return null;          // 未指定はOK
+  if(typeof svg !== "string") return "svgは文字列で指定してください";
+  const s = svg.trim();
+  if(!s) return "svgが空です";
+  if(!/^<svg[\s>]/i.test(s))  return "svgは <svg で始まる必要があります";
+  if(!/<\/svg>$/i.test(s))    return "svgは </svg> で終わる必要があります";
+  if(/<script[\s>]/i.test(s)) return "svgに script は含められません";
+  if(/<foreignObject[\s>]/i.test(s)) return "svgに foreignObject は含められません";
+  if(/<\s*(iframe|embed|object|animate|set)[\s>]/i.test(s)) return "svgに埋め込み・アニメーション要素は含められません";
+  if(/\son[a-z]+\s*=/i.test(s)) return "svgにイベント属性(on*)は含められません";
+  if(/javascript\s*:/i.test(s)) return "svgに javascript: は含められません";
+
+  /* 外部参照の禁止(オフライン原則 §7)。フラグメント参照(#id)のみ許可 */
+  const refs = s.match(/(?:xlink:)?href\s*=\s*(["'])([\s\S]*?)\1/gi) || [];
+  for(const r of refs){
+    const v = (/(["'])([\s\S]*?)\1/.exec(r) || [])[2] || "";
+    if(!v.trim().startsWith("#")) return "svgに外部参照(href)は含められません";
+  }
+  if(/url\s*\(\s*["']?\s*(?!#)/i.test(s)) return "svgに外部リソース参照(url())は含められません";
+  return null;
+}
+
 /* 起動時の構造チェック(内蔵バンク・localStorageキャッシュの読み込み用)。
    §5 の空バンク bank_K を通すため questions は空配列を許容する
    (おうちの人メニューからの投入では validateBankPaste が 1問以上を要求する) */
@@ -15,7 +43,8 @@ function validateBankObj(b, subject){
   if(!Array.isArray(b.cats)) return false;
   if(!Array.isArray(b.questions)) return false;
   return b.questions.every(q =>
-    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0);
+    q && q.id && q.q && q.cat && Array.isArray(q.ans) && q.ans.length > 0 &&
+    svgFieldError(q.svg) === null);          // v4.2: 壊れた/危険な図版を持つバンクは採用しない
 }
 
 function validateSkinObj(s, kind){
@@ -73,6 +102,8 @@ function validateBankPasteFukushu(text, subject, existingIds){
     if(ansNeedsTwoForms(q, subject) && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。` };
     }
+    const svgErr = svgFieldError(q.svg);
+    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
     ids.push(q.id);
   }
 
@@ -133,6 +164,8 @@ function validateBankPasteYoshu(text){
     if(ansNeedsTwoForms(q, "Y") && q.ans.length < 2){
       return { ok:false, reason:`テキスト回答は漢字+ひらがな等、2種類以上のans表記が必要です(id: ${q.id})。国語の漢字問題のみ1種可。` };
     }
+    const svgErr = svgFieldError(q.svg);
+    if(svgErr) return { ok:false, reason:`${svgErr}(id: ${q.id})。` };
   }
   /* サイクル使い捨てのため既存バンクとの連続性チェックは行わない(yoshu §8) */
   return { ok:true, bank:c };
