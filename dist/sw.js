@@ -1,13 +1,13 @@
 /* =====================================================================
    sw.js — Service Worker(cache-first / プリキャッシュ)
    仕様: spec_quest_v4_1.md §7
-   ・44ea2ffe9cac は build.mjs が dist/index.html の内容ハッシュで置換する
+   ・91a576929d0e は build.mjs が dist/index.html の内容ハッシュで置換する
      → 中身が変わったときだけキャッシュ名が変わり、更新が検出される
    ・install で skipWaiting はしない(学習中の強制リロードをしないため)。
      ページから SKIP_WAITING を受け取ったときだけ待機解除する
    ===================================================================== */
 
-const CACHE = "quest-44ea2ffe9cac";
+const CACHE = "quest-91a576929d0e";
 const ASSETS = [
   "./",
   "./index.html",
